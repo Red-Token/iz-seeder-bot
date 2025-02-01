@@ -1,7 +1,10 @@
 import {EventType, Publisher, Subscription, SynchronisedSession} from "iz-nostrlib";
 import {Community, CommunityIdentity} from "iz-nostrlib/dist/org/nostr/communities/Community";
 import {TrustedEvent} from "@welshman/util";
-import {Nip9999SeederTorrentTransformationRequestEvent} from "./Nip9999SeederControllEvents";
+import {
+    Nip9999SeederTorrentTransformationRequestEvent,
+    Nip9999SeederTorrentTransformationResponseEvent
+} from "./Nip9999SeederControllEvents";
 
 export class NostrCommunityService {
     public session: SynchronisedSession
@@ -16,7 +19,7 @@ export class NostrCommunityService {
                 this.session,
                 [
                     {
-                        kinds: [Nip9999SeederTorrentTransformationRequestEvent.KIND]
+                        kinds: [Nip9999SeederTorrentTransformationRequestEvent.KIND, Nip9999SeederTorrentTransformationResponseEvent.KIND]
                         // authors: [page.params.pubkey]
                     }
                 ],
