@@ -2,7 +2,7 @@ import {AbstractNipMiniEvent, safeFindSingleTagValue} from "iz-nostrlib/dist/org
 import {HashedEvent, TrustedEvent} from "@welshman/util";
 
 export class Nip9999SeederTorrentTransformationRequestEvent extends AbstractNipMiniEvent {
-    static KIND: number = 29999;
+    static KIND: number = 9999;
 
     static build(event: HashedEvent) {
         return new Nip9999SeederTorrentTransformationRequestEvent(
@@ -38,7 +38,7 @@ export class Nip9999SeederTorrentTransformationRequestEvent extends AbstractNipM
 }
 
 export class Nip9999SeederTorrentTransformationResponseEvent extends AbstractNipMiniEvent {
-    static KIND: number = 29998;
+    static KIND: number = 9998;
 
     static build(event: HashedEvent) {
         return new Nip9999SeederTorrentTransformationResponseEvent(
@@ -59,7 +59,7 @@ export class Nip9999SeederTorrentTransformationResponseEvent extends AbstractNip
         ];
 
         return {
-            content: JSON.stringify('this.profile'),
+            content: JSON.stringify(this.state),
             tags
         }
     }

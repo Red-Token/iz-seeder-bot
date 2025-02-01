@@ -83,7 +83,7 @@ describe('MyTest', () => {
             console.log(event)
         })
 
-        const file = '/home/rene/git/iz-seeder-bot/test/data/nn1/orig/nn1.mp4'
+        const file = 'test/data/nn1/orig/nn1.mp4'
 
         const torrent = wt.seed(file, options)
 
@@ -94,7 +94,7 @@ describe('MyTest', () => {
         })
 
         torrent.on('upload', (bytes: number) => {
-            console.log('upload' + bytes)
+            // console.log('upload' + bytes)
         })
     })
 })
