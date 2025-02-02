@@ -1,5 +1,5 @@
 import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
-import {EventType, SignerData, SignerType} from "iz-nostrlib";
+import {EventType, Nip9999SeederTorrentTransformationRequestEvent, NostrCommunityServiceClient, SignerData, SignerType} from "iz-nostrlib";
 
 // import {
 //     asyncCreateWelshmanSession,
@@ -17,8 +17,6 @@ import {
 } from "iz-nostrlib/dist/org/nostr/communities/Community";
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
-import {NostrCommunityServiceClient} from "../src/test/nostrCommunityServiceClient";
-import {Nip9999SeederTorrentTransformationRequestEvent} from "../src/test/Nip9999SeederControllEvents";
 
 // import {NostrCommunityService} from "../src/test/nostrCommunityService";
 // import {Nip9999SeederTorrentTransformationRequestEvent} from "../src/test/Nip9999SeederControllEvents";

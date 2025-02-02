@@ -2,23 +2,19 @@
 import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
-import {EventType, SignerData, SignerType} from "iz-nostrlib";
+import {EventType, Nip9999SeederTorrentTransformationRequestEvent,
+    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot, SignerData, SignerType} from "iz-nostrlib";
 import {
     asyncCreateWelshmanSession,
     Community,
     CommunityIdentity
 } from "iz-nostrlib/dist/org/nostr/communities/Community.js";
-import {
-    Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent
-} from "./test/Nip9999SeederControllEvents.js";
 import WebTorrent from "webtorrent";
 import SimplePeer from "simple-peer";
 import {randomUUID} from "node:crypto";
 import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
-import {NostrCommunityServiceBot} from "./test/nostrCommunityServiceBot";
 
 
 const greet = (name: string): string => {
@@ -145,7 +141,6 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                                 {msg: 'Start seeding'},
                                 id,
                                 [['x', outTorrent.infoHash]])
-                            // [['x', outTorrent.infoHash], ['e', id, '', 'root']])
                             ncs.publisher.publish(Nip9999SeederTorrentTransformationResponseEvent.KIND, e4.createTemplate())
                         })
                     })
@@ -209,7 +204,6 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     const videoCodec = 'libx264'
 
                     Object.entries(formats).forEach(([key, value]) => {
-                        // cmd = cmd.map(`[${key}]`).addOption(`-c:v:${i} ${videoCodec}`).addOption(`-b:v:${i} ${value.bitrate}`)
                         cmd = cmd.map(`[${key}]`).addOption(`-c:v:${i} ${videoCodec}`).addOption("-g", "48").addOption("-keyint_min", "48")
                         i++
                     })
@@ -236,14 +230,12 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                             return
                         oldTime = now
 
-                        // const e3 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Transcoding Progress ' + progress.percent}, [['e', id, '', 'root']])
                         const e3 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Transcoding Progress ' + progress.percent}, id)
                         const y = ncs.publisher.publish(Nip9999SeederTorrentTransformationResponseEvent.KIND, e3.createTemplate())
 
                     }).on('end', () => {
                         console.log('Processing finished successfully!');
 
-                        // const e4 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Transcoding DONE!'}, [['e', id, '', 'root']])
                         const e4 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Transcoding DONE!'}, id)
                         const x = ncs.publisher.publish(Nip9999SeederTorrentTransformationResponseEvent.KIND, e4.createTemplate())
 
