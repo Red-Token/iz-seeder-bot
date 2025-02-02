@@ -43,19 +43,21 @@ export class Nip9999SeederTorrentTransformationResponseEvent extends AbstractNip
     static build(event: HashedEvent) {
         return new Nip9999SeederTorrentTransformationResponseEvent(
             JSON.parse(event.content),
+            safeFindSingleTagValue(event, 'd'),
             [],
             event
         )
     }
 
-    constructor(public state: any,
-                tags: string[][] = [], event?: TrustedEvent) {
-        super(tags, event);
+    constructor(public state: any, public id: string, tags: string[][] = [], event?: TrustedEvent) {
+        super([...tags], event);
     }
 
     createTemplate() {
         const tags = [
             ...this.tags,
+            ['e', this.id, '', 'root'],
+            ['d', this.id],
         ];
 
         return {
