@@ -59,6 +59,10 @@ mkdirSync(torrentPath, {recursive: true})
 
 const torrent = wt.add('7ae6da845667363d2e6c21966b2a4886e72cfb35', options && {path: torrentPath})
 
+torrent.on('infoHash', () => {
+    console.log(`download torrent ${torrent.infoHash}`)
+})
+
 torrent.on('download', (bytes) => {
     console.log(`download torrent ${bytes} ${torrent.progress}`)
 })
