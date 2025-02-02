@@ -2,8 +2,10 @@
 import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
-import {EventType, Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot, SignerData, SignerType} from "iz-nostrlib";
+import {
+    EventType, Nip9999SeederTorrentTransformationRequestEvent,
+    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot, SignerData, SignerType
+} from "iz-nostrlib";
 import {
     asyncCreateWelshmanSession,
     Community,
@@ -88,7 +90,12 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
             const torrentPath = path.join(uploadDir, randomUUID())
             mkdirSync(torrentPath, {recursive: true})
 
-            const torrent = wt.add(req.x, options && {path: torrentPath})
+            const torrent = wt.add(req.x, options)
+
+            torrent.on('infoHash', () => {
+                console.log('infoHash:' + torrent.infoHash);
+                console.log('magnetURI:' + torrent.magnetURI);
+            })
 
             let oldTime = 0
             torrent.on('download', (bytes) => {
