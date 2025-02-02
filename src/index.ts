@@ -92,6 +92,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
 
             let oldTime = 0
             torrent.on('download', (bytes) => {
+                console.log('download torrent', bytes)
                 const now = new Date().getTime();
 
                 if (torrent.done || now - oldTime < 300)
@@ -101,13 +102,13 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
 
                 // console.log(bytes)
                 torrent.progress
-                const e2 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Downloaded' + torrent.progress}, event.id)
+                const e2 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Downloaded ' + torrent.progress}, event.id)
                 // const e2 = new Nip9999SeederTorrentTransformationResponseEvent({msg: 'Downloaded' + torrent.progress}, [['e', event.id, '', 'root']])
                 ncs.publisher.publish(Nip9999SeederTorrentTransformationResponseEvent.KIND, e2.createTemplate())
             })
 
             torrent.on('upload', (bytes) => {
-                // console.log(bytes)
+                console.log(bytes)
             })
 
             torrent.on('error', (err) => {
