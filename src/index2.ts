@@ -74,3 +74,8 @@ torrent.on('error', (err) => {
 torrent.on('done', () => {
     console.log('done')
 })
+
+torrent.on('wire', () => {
+    console.log('wire')
+})
+
