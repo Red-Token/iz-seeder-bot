@@ -17,7 +17,7 @@ import {
 } from "iz-nostrlib/dist/org/nostr/communities/Community";
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
-import {NostrCommunityService} from "../src/test/nostrCommunityService";
+import {NostrCommunityServiceClient} from "../src/test/nostrCommunityServiceClient";
 import {Nip9999SeederTorrentTransformationRequestEvent} from "../src/test/Nip9999SeederControllEvents";
 
 // import {NostrCommunityService} from "../src/test/nostrCommunityService";
@@ -77,7 +77,7 @@ describe('MyTest', () => {
         const community = new Community('iz-stream', relays, 'https://img.freepik.com/free-psd/close-up-delicious-apple_23-2151868338.jpg')
         const ci = new CommunityIdentity(community, await asyncCreateWelshmanSession(bobSignerData))
 
-        const ncs = new NostrCommunityService(community, ci)
+        const ncs = new NostrCommunityServiceClient(community, ci)
 
         ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) => {
             console.log(event)

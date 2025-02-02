@@ -6,7 +6,7 @@ import {
     Nip9999SeederTorrentTransformationResponseEvent
 } from "./Nip9999SeederControllEvents";
 
-export class NostrCommunityService {
+export class NostrCommunityServiceBot {
     public session: SynchronisedSession
     public subscriptions: Subscription[] = []
     public publisher: Publisher;
@@ -14,12 +14,15 @@ export class NostrCommunityService {
     constructor(public community: Community, public communityIdentity: CommunityIdentity) {
         this.session = new SynchronisedSession(community.relays)
 
+        const nowInSeconds = Math.floor(Date.now() / 1000);
+
         for (const relay of community.relays) {
             const sub = new Subscription(
                 this.session,
                 [
                     {
-                        kinds: [Nip9999SeederTorrentTransformationRequestEvent.KIND, Nip9999SeederTorrentTransformationResponseEvent.KIND]
+                        kinds: [Nip9999SeederTorrentTransformationRequestEvent.KIND],
+                        since: nowInSeconds,
                         // authors: [page.params.pubkey]
                     }
                 ],
@@ -31,7 +34,7 @@ export class NostrCommunityService {
 
         this.publisher = new Publisher(this.session, communityIdentity)
 
-        this.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) => {
-        })
+        // this.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) => {
+        // })
     }
 }
