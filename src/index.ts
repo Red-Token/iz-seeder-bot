@@ -44,7 +44,8 @@ const rtcConfig = {
 }
 
 const options = {
-    announce: ['wss://tracker.webtorrent.dev'],
+    // announce: ['wss://tracker.webtorrent.dev'],
+    announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
     maxWebConns: 500
 };
 
@@ -56,7 +57,6 @@ const wt = new WebTorrent({
         }
     },
 });
-
 
 setContext({
     net: getDefaultNetContext(),
@@ -92,7 +92,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
 
             let oldTime = 0
             torrent.on('download', (bytes) => {
-                console.log('download torrent', bytes)
+                console.log(`download torrent ${bytes} ${torrent.progress}`)
                 const now = new Date().getTime();
 
                 if (torrent.done || now - oldTime < 300)
