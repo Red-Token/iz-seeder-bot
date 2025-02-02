@@ -87,8 +87,13 @@ describe('MyTest', () => {
 
         torrent.on('infoHash', () => {
             console.log('infoHash', torrent.infoHash)
-            const req = new Nip9999SeederTorrentTransformationRequestEvent("NN1", torrent.infoHash, {transform: 'cool'})
-            ncs.publisher.publish(Nip9999SeederTorrentTransformationRequestEvent.KIND, req.createTemplate())
+            console.log('metadata: ' + torrent.magnetURI);
+            // const req = new Nip9999SeederTorrentTransformationRequestEvent("NN1", torrent.infoHash, {transform: 'cool'})
+            // ncs.publisher.publish(Nip9999SeederTorrentTransformationRequestEvent.KIND, req.createTemplate())
+        })
+
+        torrent.on('metadata', () => {
+            console.log('metadata: ' + torrent.magnetURI);
         })
 
         torrent.on('upload', (bytes: number) => {

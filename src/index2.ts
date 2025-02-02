@@ -57,10 +57,14 @@ const seedingDir = '/tmp/iz-seeder-bot/seeding'
 const torrentPath = path.join(uploadDir, randomUUID())
 mkdirSync(torrentPath, {recursive: true})
 
-const torrent = wt.add('7ae6da845667363d2e6c21966b2a4886e72cfb35', options && {path: torrentPath})
+const torrent = wt.add('7ae6da845667363d2e6c21966b2a4886e72cfb35', options)
 
 torrent.on('infoHash', () => {
     console.log(`download torrent ${torrent.infoHash}`)
+})
+
+torrent.on('metadata', () => {
+    console.log('metadata: ' + torrent.magnetURI);
 })
 
 torrent.on('download', (bytes) => {
