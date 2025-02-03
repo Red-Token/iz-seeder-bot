@@ -17,6 +17,7 @@ import {randomUUID} from "node:crypto";
 import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
+import fs from "node:fs";
 
 console.log('Bot is rdy!');
 
@@ -72,7 +73,10 @@ const ci = new CommunityIdentity(community, await asyncCreateWelshmanSession(bot
 const ncs = new NostrCommunityServiceBot(community, ci)
 
 const uploadDir = '/tmp/iz-seeder-bot/upload'
+const transcodingDir = '/tmp/iz-seeder-bot/transcoding'
 const seedingDir = '/tmp/iz-seeder-bot/seeding'
+
+mkdirSync(seedingDir, {recursive: true})
 
 class RequestStateProgressTracker {
     constructor(private readonly id: string, private readonly publisher: Publisher) {
@@ -150,13 +154,20 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     throw new Error('')
 
                 const id = req.event.id
-                const outputDir = path.join(seedingDir, id)
+                const transcodingOutputDir = path.join(transcodingDir, id)
 
-                transcode(id, path.join(torrent.path, file.path), outputDir).then(() => {
-                    const outTorrent = wt.seed(outputDir, {...options, ...{name: req.title}})
+                transcode(id, path.join(torrent.path, file.path), transcodingOutputDir).then(() => {
+                    // TODO: This can be done earlier
+                    // We are done transcoding, remove the torrent
+                    const assetDir = path.join(seedingDir, id)
+                    wt.remove(req.x)
+                    fs.rename(transcodingOutputDir, assetDir, (err) => {
+                        console.log(err)
+                    });
+
+                    const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
 
                     outTorrent.on('infoHash', () => {
-
                         const state = {
                             state: 'seeding',
                             msg: `Transcoding has been done, starting to seed at ${outTorrent.infoHash}`
