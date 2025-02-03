@@ -165,7 +165,8 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                         console.log(err)
                     });
 
-                    const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
+                    // const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
+                    const outTorrent = wt.seed(assetDir, options)
 
                     outTorrent.on('infoHash', () => {
                         const state = {
