@@ -74,9 +74,15 @@ const ncs = new NostrCommunityServiceBot(community, ci)
 
 const uploadDir = '/tmp/iz-seeder-bot/upload'
 const transcodingDir = '/tmp/iz-seeder-bot/transcoding'
-const seedingDir = '/tmp/iz-seeder-bot/seeding'
+const seedingDir = '/var/tmp/iz-seeder-bot/seeding'
 
 mkdirSync(seedingDir, {recursive: true})
+
+fs.readdirSync(seedingDir).forEach(    filename => {
+    console.log(`Starting seeding: ${filename}`);
+    wt.seed(path.join(seedingDir, filename), options)
+    console.log(`Started seeding: ${filename}`);
+})
 
 class RequestStateProgressTracker {
     constructor(private readonly id: string, private readonly publisher: Publisher) {
