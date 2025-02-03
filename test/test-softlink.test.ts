@@ -7,6 +7,10 @@ describe('MyTest2', () => {
     })
 
     it('Lets upload something', async () => {
-        console.log("MyTest2");
+
+        fs.readdirSync('/tmp/iz-seeder-bot/seeding').forEach(    filename => {
+            console.log(filename)
+        })
+
     })
 })
