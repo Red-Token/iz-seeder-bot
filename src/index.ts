@@ -1,16 +1,15 @@
 // src/index.ts
-import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
+import {TrustedEvent} from "@welshman/util";
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
 import {
-    EventType, Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot, Publisher, SignerData, SignerType
+    EventType,
+    Nip9999SeederTorrentTransformationRequestEvent,
+    Nip9999SeederTorrentTransformationResponseEvent,
+    NostrCommunityServiceBot,
+    SignerData,
+    SignerType
 } from "iz-nostrlib";
-import {
-    asyncCreateWelshmanSession,
-    Community,
-    CommunityIdentity
-} from "iz-nostrlib/dist/org/nostr/communities/Community.js";
 import WebTorrent from "webtorrent";
 import SimplePeer from "simple-peer";
 import {randomUUID} from "node:crypto";
@@ -18,7 +17,13 @@ import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 import fs from "node:fs";
+import {GlobalNostrContext} from "iz-nostrlib/dist/org/nostr/communities/GlobalNostrContext";
+import {BotConfig} from "./config";
+import {asyncCreateWelshmanSession, Identifier, Identity} from "iz-nostrlib/dist/org/nostr/communities/Identity";
+import {CommunityNostrContext} from "iz-nostrlib/dist/org/nostr/communities/CommunityNostrContext";
+import {DynamicPublisher} from "iz-nostrlib/dist/org/nostr/ses/DynamicPublisher";
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 console.log('Bot is rdy!');
 
 const rtcConfig = {
@@ -59,18 +64,39 @@ setContext({
     app: getDefaultAppContext()
 });
 
-const url = 'wss://relay.stream.labs.h3.se';
-const relays = [normalizeRelayUrl(url)];
+// NSec nsec1gdraq2julszrgygm5zf7e02rng6jguxmr5uuxy7wnyex9yszkwesrfnu3m
+// NPub npub1kecwpcs0k6m7j6crfyfecqc4p45j5aqrexrqnxs64h6x0k4x0yysrx2y6f
+// PublicKey b670e0e20fb6b7e96b0349139c03150d692a7403c986099a1aadf467daa67909
 
-const botNSec = 'nsec18c4t7czha7g7p9cm05ve4gqx9cmp9w2x6c06y6l4m52jrry9xp7sl2su9x'
-const botSignerData: SignerData = {type: SignerType.NIP01, nsec: botNSec}
+// const url = 'wss://relay.stream.labs.h3.se';
+// const relays = [normalizeRelayUrl(url)];
 
-console.log("botSignerData", botSignerData);
+export async function wait(time: number) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(true)
+        }, time)
+    })
+}
 
-const community = new Community('iz-stream', relays, 'https://img.freepik.com/free-psd/close-up-delicious-apple_23-2151868338.jpg')
-const ci = new CommunityIdentity(community, await asyncCreateWelshmanSession(botSignerData))
+const botConfig = new BotConfig()
 
-const ncs = new NostrCommunityServiceBot(community, ci)
+// GlobalNostrContext.startUrls = botConfig.comRelay
+const gnc = GlobalNostrContext.instance
+
+await wait(2000)
+
+const botSignerData: SignerData = {type: SignerType.NIP01, nsec: botConfig.nsec}
+const botIdentifier = new Identifier(await asyncCreateWelshmanSession(botSignerData))
+
+// const bgi = new Identity(gnc, botIdentifier)
+const cnc = new CommunityNostrContext(botConfig.communityPubkey, gnc)
+
+const bci = new Identity(cnc, botIdentifier)
+
+console.log("Bot Pubkey", bci.pubkey)
+
+const ncs = new NostrCommunityServiceBot(cnc, bci)
 
 const uploadDir = '/tmp/iz-seeder-bot/upload'
 const transcodingDir = '/tmp/iz-seeder-bot/transcoding'
@@ -78,19 +104,19 @@ const seedingDir = '/var/tmp/iz-seeder-bot/seeding'
 
 mkdirSync(seedingDir, {recursive: true})
 
-fs.readdirSync(seedingDir).forEach(    filename => {
+fs.readdirSync(seedingDir).forEach(filename => {
     console.log(`Starting seeding: ${filename}`);
     wt.seed(path.join(seedingDir, filename), options)
     console.log(`Started seeding: ${filename}`);
 })
 
 class RequestStateProgressTracker {
-    constructor(private readonly id: string, private readonly publisher: Publisher) {
+    constructor(private readonly id: string, private readonly publisher: DynamicPublisher) {
     }
 
     updateState(state: any, tags: string[][] = []) {
         const e2 = new Nip9999SeederTorrentTransformationResponseEvent(state, this.id, tags)
-        this.publisher.publish(Nip9999SeederTorrentTransformationResponseEvent.KIND, e2.createTemplate())
+        this.publisher.publish(e2)
     }
 }
 
@@ -168,6 +194,8 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     const assetDir = path.join(seedingDir, id)
                     wt.remove(req.x)
                     fs.rename(transcodingOutputDir, assetDir, (err) => {
+                        if (err === undefined || err === null) return
+
                         console.log(err)
                     });
 
@@ -177,9 +205,18 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     outTorrent.on('infoHash', () => {
                         const state = {
                             state: 'seeding',
-                            msg: `Transcoding has been done, starting to seed at ${outTorrent.infoHash}`
+                            msg: `Transcoding has been done, starting to seed at ${outTorrent.infoHash}`,
+                            final: true
                         }
                         rspt.updateState(state, [['x', outTorrent.infoHash]])
+                    })
+
+                    outTorrent.on('error', (error) => {
+                        console.log(error)
+                    })
+
+                    outTorrent.on('warning', (warning) => {
+                        console.log(warning)
                     })
                 })
             })
@@ -294,3 +331,5 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
         })
     }
 })
+
+console.log("BOT STARTED DONE")
