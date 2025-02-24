@@ -20,7 +20,6 @@ import SimplePeer from 'simple-peer'
 import {randomUUID} from 'node:crypto'
 import {mkdirSync} from 'fs'
 import ffmpeg from 'fluent-ffmpeg'
-
 import path from 'node:path'
 import fs from 'node:fs'
 import {BotConfig} from './config.js'

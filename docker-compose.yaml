@@ -1,0 +1,11 @@
+services:
+  iz-seeder-bot:
+    image: iz-seeder-bot
+    build: .
+    volumes:
+      - /tmp/iz-seeder-bot/upload:/tmp/iz-seeder-bot/upload
+      - /tmp/iz-seeder-bot/transcoding:/tmp/iz-seeder-bot/upload
+      - /var/tmp/iz-seeder-bot/seeding:/tmp/iz-seeder-bot/upload
+    ports:
+      - "5555:7777"
+    restart: unless-stopped
