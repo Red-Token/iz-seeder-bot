@@ -5,3 +5,4 @@
 
 /test/data/bbb/orig/
 .hide
+tsconfig.mjs.tsbuildinfo
