@@ -1,15 +1,20 @@
 // src/index.ts
 import {TrustedEvent} from "@welshman/util";
-import {setContext} from "@welshman/lib";
-import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
 import {
     EventType,
     Nip9999SeederTorrentTransformationRequestEvent,
     Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceBot,
     SignerData,
-    SignerType
-} from "iz-nostrlib";
+    SignerType,
+    GlobalNostrContext,
+    asyncCreateWelshmanSession,
+    Identifier,
+    Identity,
+    DynamicPublisher,
+    CommunityNostrContext
+} from 'iz-nostrlib/forbot'
+
 import WebTorrent from "webtorrent";
 import SimplePeer from "simple-peer";
 import {randomUUID} from "node:crypto";
@@ -17,11 +22,8 @@ import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 import fs from "node:fs";
-import {GlobalNostrContext} from "iz-nostrlib/dist/org/nostr/communities/GlobalNostrContext";
-import {BotConfig} from "./config";
-import {asyncCreateWelshmanSession, Identifier, Identity} from "iz-nostrlib/dist/org/nostr/communities/Identity";
-import {CommunityNostrContext} from "iz-nostrlib/dist/org/nostr/communities/CommunityNostrContext";
-import {DynamicPublisher} from "iz-nostrlib/dist/org/nostr/ses/DynamicPublisher";
+import {BotConfig} from "./config.js";
+
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 console.log('Bot is rdy!');
@@ -59,10 +61,10 @@ const wt = new WebTorrent({
     },
 });
 
-setContext({
-    net: getDefaultNetContext(),
-    app: getDefaultAppContext()
-});
+// setContext({
+//     net: getDefaultNetContext(),
+//     app: getDefaultAppContext()
+// });
 
 // NSec nsec1gdraq2julszrgygm5zf7e02rng6jguxmr5uuxy7wnyex9yszkwesrfnu3m
 // NPub npub1kecwpcs0k6m7j6crfyfecqc4p45j5aqrexrqnxs64h6x0k4x0yysrx2y6f
@@ -98,9 +100,9 @@ console.log("Bot Pubkey", bci.pubkey)
 
 const ncs = new NostrCommunityServiceBot(cnc, bci)
 
-const uploadDir = '/tmp/iz-seeder-bot/upload'
-const transcodingDir = '/tmp/iz-seeder-bot/transcoding'
-const seedingDir = '/var/tmp/iz-seeder-bot/seeding'
+const uploadDir = './tmp/iz-seeder-bot/upload'
+const transcodingDir = './tmp/iz-seeder-bot/transcoding'
+const seedingDir = './var/tmp/iz-seeder-bot/seeding'
 
 mkdirSync(seedingDir, {recursive: true})
 
@@ -126,7 +128,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
     const rspt = new RequestStateProgressTracker(event.id, ncs.publisher)
 
     if (event.kind === Nip9999SeederTorrentTransformationRequestEvent.KIND) {
-        const req = Nip9999SeederTorrentTransformationRequestEvent.build(event)
+        const req = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
 
         const state = {state: 'accepted', msg: `Processing request ${event.id} for ${req.x}`}
         rspt.updateState(state)
