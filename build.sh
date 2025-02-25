@@ -7,7 +7,7 @@ fi
 
 if ! command -v docker &>/dev/null; then
     echo "Error. Docker is not installed"
-    
+
     read -p "Do you have install docker? (y/n): " answer
     answer=${answer:-n}
     case "$answer" in
@@ -30,6 +30,7 @@ fi
 echo "Starting build..."
 
 docker compose down
+docker system prune -a -f
+
 docker compose build --no-cache
 docker compose up -d
-docker system prune -f

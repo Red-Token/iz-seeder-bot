@@ -7,9 +7,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
-    "start3": "node --require mock-local-storage --loader ts-node/esm src/index.ts",
-    "build": "gts clean && rimraf tsconfig.cjs.* tsconfig.mjs.* && tsc-multi",
-    "serve": "node --require mock-local-storage dist/index.mjs"
+    "start3": "node --require ./dist/preload.cjs --loader ts-node/esm src/index.ts",
+    "build": "gts clean && node ./esbuild.config.js && cp ./src/preload.cjs dist/",
+    "docker": "npm run build && sudo ./build.sh",
+    "serve": "node --require ./dist/preload.cjs dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +32,7 @@
     "@types/simple-peer": "^9.11.8",
     "@types/webtorrent": "^0.110.0",
     "chai": "^5.2.0",
+    "esbuild": "^0.25.0",
     "gts": "^6.0.2",
     "mocha": "^10.8.2",
     "rimraf": "^6.0.1",
