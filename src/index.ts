@@ -1,11 +1,11 @@
 // src/index.ts
 import {TrustedEvent} from '@welshman/util'
+import {EventType} from 'iz-nostrlib'
 import {
     Nip9999SeederTorrentTransformationRequestEvent,
     Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceBot
 } from 'iz-nostrlib/seederbot'
-import {EventType} from 'iz-nostrlib'
 import {
     GlobalNostrContext,
     CommunityNostrContext,
@@ -23,8 +23,6 @@ import ffmpeg from 'fluent-ffmpeg'
 import path from 'node:path'
 import fs from 'node:fs'
 import {BotConfig} from './config.js'
-
-
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 console.log('Bot is rdy!')
