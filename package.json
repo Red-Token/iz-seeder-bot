@@ -40,7 +40,7 @@
     "@welshman/store": "~0.0.12",
     "@welshman/util": "~0.0.45",
     "fluent-ffmpeg": "^2.1.3",
-    "iz-nostrlib": "^0.1.15-snapshot.4",
+    "iz-nostrlib": "^0.1.16-0",
     "localStorage": "^1.0.4",
     "mock-local-storage": "^1.1.24",
     "node-localstorage": "^3.0.5",
