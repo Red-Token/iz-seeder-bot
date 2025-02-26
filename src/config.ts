@@ -1,6 +1,7 @@
 import {normalizeRelayUrl} from "@welshman/util";
 
-const url = 'wss://relay.lxc';
+// const url = 'wss://relay.lxc';
+const url = 'wss://relay.big-fish.communities.pre-alfa.iz-stream.com';
 
 export class BotConfig {
     comRelay = [normalizeRelayUrl(url)]
