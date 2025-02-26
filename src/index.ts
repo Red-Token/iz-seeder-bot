@@ -128,7 +128,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
     const rspt = new RequestStateProgressTracker(event.id, ncs.publisher)
 
     if (event.kind === Nip9999SeederTorrentTransformationRequestEvent.KIND) {
-        const req = Nip9999SeederTorrentTransformationRequestEvent.build(event)
+        const req = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
 
         const state = {state: 'accepted', msg: `Processing request ${event.id} for ${req.x}`}
         rspt.updateState(state)
