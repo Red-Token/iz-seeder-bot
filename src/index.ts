@@ -22,8 +22,10 @@ import {BotConfig} from "./config";
 import {asyncCreateWelshmanSession, Identifier, Identity} from "iz-nostrlib/dist/org/nostr/communities/Identity";
 import {CommunityNostrContext} from "iz-nostrlib/dist/org/nostr/communities/CommunityNostrContext";
 import {DynamicPublisher} from "iz-nostrlib/dist/org/nostr/ses/DynamicPublisher";
+import {normalizeRelayUrl} from "@welshman/util";
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 console.log('Bot is rdy!');
 
 const rtcConfig = {
@@ -82,7 +84,7 @@ export async function wait(time: number) {
 const botConfig = new BotConfig()
 
 // GlobalNostrContext.startUrls = botConfig.comRelay
-const gnc = GlobalNostrContext.instance
+const gnc = new GlobalNostrContext([normalizeRelayUrl('wss://relay.pre-alfa.iz-stream.com')])
 
 await wait(2000)
 
