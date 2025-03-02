@@ -1,5 +1,5 @@
 // src/index.ts
-import {TrustedEvent} from '@welshman/util'
+import {hasValidSignature, normalizeRelayUrl, TrustedEvent} from '@red-token/welshman/util'
 import {EventType} from 'iz-nostrlib'
 import {
     Nip9999SeederTorrentTransformationRequestEvent,
@@ -23,10 +23,13 @@ import ffmpeg from 'fluent-ffmpeg'
 import path from 'node:path'
 import fs from 'node:fs'
 import {BotConfig} from './config.js'
+import {setContext, ctx} from '@red-token/welshman/lib'
+import {getDefaultAppContext, getDefaultNetContext, repository, tracker} from '@red-token/welshman/app'
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 console.log('Bot is rdy!')
 
+const urlRelay = 'wss://relay.pre-alfa.iz-stream.com'
 const rtcConfig = {
     iceServers: [
         {
@@ -58,10 +61,30 @@ const wt = new WebTorrent({
     }
 })
 
-// setContext({
-//     net: getDefaultNetContext(),
-//     app: getDefaultAppContext()
-// });
+setContext({
+    app: getDefaultAppContext({
+        requestDelay: 100,
+        authTimeout: 500,
+        requestTimeout: 5000,
+        dufflepudUrl: 'https://api.example.com',
+        indexerRelays: [urlRelay]
+    }),
+    net: getDefaultNetContext({
+        
+
+        // Track deleted events
+        isDeleted: (url, event) => repository.isDeleted(event),
+
+        // Custom event handling
+        onEvent: (url, event) => {
+            // Save to local repository
+            repository.publish(event)
+
+            // Track which relay it came from
+            tracker.track(event.id, url)
+        }
+    })
+})
 
 // NSec nsec1gdraq2julszrgygm5zf7e02rng6jguxmr5uuxy7wnyex9yszkwesrfnu3m
 // NPub npub1kecwpcs0k6m7j6crfyfecqc4p45j5aqrexrqnxs64h6x0k4x0yysrx2y6f
@@ -81,7 +104,7 @@ export async function wait(time: number) {
 const botConfig = new BotConfig()
 
 // GlobalNostrContext.startUrls = botConfig.comRelay
-const gnc = GlobalNostrContext.instance
+const gnc = new GlobalNostrContext([normalizeRelayUrl(urlRelay)])
 
 await wait(2000)
 

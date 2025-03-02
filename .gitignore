@@ -8,3 +8,5 @@
 tsconfig.mjs.tsbuildinfo
 .npmrc
 localstorage
+tmp
+var

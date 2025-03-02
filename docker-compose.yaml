@@ -1,6 +1,6 @@
 services:
-  iz-seeder-test:
-    image: iz-seeder-test
+  iz-seeder-bot:
+    image: iz-seeder-bot
     build: .
     volumes:
       - ./config.json:/config.json

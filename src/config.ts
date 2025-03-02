@@ -1,5 +1,5 @@
 import {readFileSync} from 'node:fs'
-import {normalizeRelayUrl} from '@welshman/util'
+import {normalizeRelayUrl} from '@red-token/welshman/util'
 
 export class BotConfig {
     public readonly nsec: string
