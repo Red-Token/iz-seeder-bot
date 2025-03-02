@@ -5,3 +5,7 @@
 
 /test/data/bbb/orig/
 .hide
+.npmrc
+var
+tmp
+localstorage
