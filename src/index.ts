@@ -1,12 +1,6 @@
 // src/index.ts
-import {TrustedEvent} from "@welshman/util";
-import {setContext} from "@welshman/lib";
-import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
 import {
     EventType,
-    Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent,
-    NostrCommunityServiceBot,
     SignerData,
     SignerType
 } from "iz-nostrlib";
@@ -17,12 +11,14 @@ import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 import fs from "node:fs";
-import {GlobalNostrContext} from "iz-nostrlib/dist/org/nostr/communities/GlobalNostrContext";
-import {BotConfig} from "./config";
-import {asyncCreateWelshmanSession, Identifier, Identity} from "iz-nostrlib/dist/org/nostr/communities/Identity";
-import {CommunityNostrContext} from "iz-nostrlib/dist/org/nostr/communities/CommunityNostrContext";
-import {DynamicPublisher} from "iz-nostrlib/dist/org/nostr/ses/DynamicPublisher";
-import {normalizeRelayUrl} from "@welshman/util";
+import {GlobalNostrContext, asyncCreateWelshmanSession, Identifier, Identity, CommunityNostrContext} from "iz-nostrlib/communities";
+import {BotConfig} from "./config.js";
+import {DynamicPublisher} from "iz-nostrlib/ses";
+import {Nip9999SeederTorrentTransformationRequestEvent,
+    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot} from "iz-nostrlib/seederbot";
+import {setContext} from "@red-token/welshman/lib";
+import {getDefaultAppContext, getDefaultNetContext} from "@red-token/welshman/app";
+import {normalizeRelayUrl, TrustedEvent} from "@red-token/welshman/util";
 
 
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -84,7 +80,8 @@ export async function wait(time: number) {
 const botConfig = new BotConfig()
 
 // GlobalNostrContext.startUrls = botConfig.comRelay
-const gnc = new GlobalNostrContext([normalizeRelayUrl('wss://relay.pre-alfa.iz-stream.com')])
+
+const gnc = new GlobalNostrContext(botConfig.globalRelay)
 
 await wait(2000)
 
@@ -108,8 +105,17 @@ mkdirSync(seedingDir, {recursive: true})
 
 fs.readdirSync(seedingDir).forEach(filename => {
     console.log(`Starting seeding: ${filename}`);
-    wt.seed(path.join(seedingDir, filename), options)
-    console.log(`Started seeding: ${filename}`);
+    const t = wt.seed(path.join(seedingDir, filename), options)
+
+    t.on("infoHash", () => {
+        console.log(`Seeding file: ${t.infoHash}`);
+    })
+
+    t.on("metadata", () => {
+        console.log(`Seeding file: ${t.infoHash}`);
+    })
+
+    console.log(`Started seeding: ${filename} + ${t.infoHash}`);
 })
 
 class RequestStateProgressTracker {
