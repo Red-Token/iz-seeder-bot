@@ -27,9 +27,13 @@ import {setContext, ctx} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext, repository, tracker} from '@red-token/welshman/app'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 console.log('Bot is rdy!')
 
-const urlRelay = 'wss://relay.pre-alfa.iz-stream.com'
+const botConfig = new BotConfig()
+
+// const urlRelay = 'wss://relay.pre-alfa.iz-stream.com'
+
 const rtcConfig = {
     iceServers: [
         {
@@ -67,7 +71,7 @@ setContext({
         authTimeout: 500,
         requestTimeout: 5000,
         dufflepudUrl: 'https://api.example.com',
-        indexerRelays: [urlRelay]
+        indexerRelays: botConfig.globalRelay,
     }),
     net: getDefaultNetContext({
 
@@ -101,10 +105,10 @@ export async function wait(time: number) {
     })
 }
 
-const botConfig = new BotConfig()
+
 
 // GlobalNostrContext.startUrls = botConfig.comRelay
-const gnc = new GlobalNostrContext([normalizeRelayUrl(urlRelay)])
+const gnc = new GlobalNostrContext(botConfig.globalRelay)
 
 await wait(2000)
 
@@ -120,16 +124,27 @@ console.log('Bot Pubkey', bci.pubkey)
 
 const ncs = new NostrCommunityServiceBot(cnc, bci)
 
-const uploadDir = './tmp/iz-seeder-bot/upload'
-const transcodingDir = './tmp/iz-seeder-bot/transcoding'
-const seedingDir = './var/tmp/iz-seeder-bot/seeding'
+// const uploadDir = './tmp/iz-seeder-bot/upload'
+// const transcodingDir = './tmp/iz-seeder-bot/transcoding'
+// const seedingDir = './var/tmp/iz-seeder-bot/seeding'
 
-mkdirSync(seedingDir, {recursive: true})
+mkdirSync(botConfig.seedingDir, {recursive: true})
 
-fs.readdirSync(seedingDir).forEach((filename) => {
+fs.readdirSync(botConfig.seedingDir).forEach((filename) => {
     console.log(`Starting seeding: ${filename}`)
-    wt.seed(path.join(seedingDir, filename), options)
+    const t = wt.seed(path.join(botConfig.seedingDir, filename), options)
     console.log(`Started seeding: ${filename}`)
+
+    t.on("infoHash", () => {
+        console.log(`Seeding hash: ${t.infoHash}`);
+    })
+
+    t.on("metadata", () => {
+        console.log(`Seeding hash: ${t.infoHash}`);
+    })
+
+    console.log(`Started seeding: ${filename} + ${t.infoHash}`);
+
 })
 
 class RequestStateProgressTracker {
@@ -156,7 +171,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
         const state = {state: 'accepted', msg: `Processing request ${event.id} for ${req.x}`}
         rspt.updateState(state)
 
-        const torrentPath = path.join(uploadDir, randomUUID())
+        const torrentPath = path.join(botConfig.uploadDir, randomUUID())
         mkdirSync(torrentPath, {recursive: true})
 
         rspt.updateState({state: 'prepared', msg: `Download is prepared`})
@@ -211,12 +226,12 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     if (req.event === undefined) throw new Error('')
 
                     const id = req.event.id
-                    const transcodingOutputDir = path.join(transcodingDir, id)
+                    const transcodingOutputDir = path.join(botConfig.transcodingDir, id)
 
                     transcode(id, path.join(torrent.path, file.path), transcodingOutputDir).then(() => {
                         // TODO: This can be done earlier
                         // We are done transcoding, remove the torrent
-                        const assetDir = path.join(seedingDir, id)
+                        const assetDir = path.join(botConfig.seedingDir, id)
                         wt.remove(req.x)
                         fs.rename(transcodingOutputDir, assetDir, (err) => {
                             if (err === undefined || err === null) return

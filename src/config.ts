@@ -8,6 +8,7 @@ export class BotConfig {
     public readonly uploadDir: string
     public readonly transcodingDir: string
     public readonly seedingDir: string
+    public readonly globalRelay: string[]
 
     constructor() {
         const config = readFileSync('./config.json', 'utf8')
@@ -38,6 +39,23 @@ export class BotConfig {
         } else {
             throw new Error('comRelay must be a string or an array of strings')
         }
+
+        if (Array.isArray(parsed.globalRelay)) {
+            if (parsed.globalRelay.length === 0) {
+                throw new Error('comRelay array must not be empty')
+            }
+            this.globalRelay = parsed.globalRelay.map((relay: unknown) => {
+                if (typeof relay !== 'string') {
+                    throw new Error('Each comRelay element must be a string')
+                }
+                return normalizeRelayUrl(relay)
+            })
+        } else if (typeof parsed.globalRelay === 'string') {
+            this.globalRelay = [normalizeRelayUrl(parsed.globalRelay)]
+        } else {
+            throw new Error('comRelay must be a string or an array of strings')
+        }
+
 
         this.uploadDir = typeof parsed.uploadDir === 'string' ? parsed.uploadDir : '/tmp/iz-seeder-bot/upload'
         this.transcodingDir =
