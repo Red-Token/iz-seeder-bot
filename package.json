@@ -7,6 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
+    "start-old": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index-old.ts",
     "start3": "node --require ./dist/preload.cjs --loader ts-node/esm src/index.ts",
     "build": "gts clean && node ./esbuild.config.js && cp ./src/preload.cjs dist/",
     "docker": "npm run build && sudo ./build.sh",
