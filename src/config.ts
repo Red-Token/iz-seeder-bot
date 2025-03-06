@@ -1,11 +1,11 @@
 // const url = 'wss://relay.lxc';
 import {normalizeRelayUrl} from "@red-token/welshman/util";
 
-const gurl = 'wss://relay.pre-alfa.iz-stream.com'
-const url = 'wss://relay.big-fish.communities.pre-alfa.iz-stream.com';
+// const gurl = 'wss://relay.pre-alfa.iz-stream.com'
+// const url = 'wss://relay.big-fish.communities.pre-alfa.iz-stream.com';
 
-// const gurl = 'wss://relay.lxc'
-// const url = 'wss://relay.bf.lxc';
+const gurl = 'wss://relay.lxc'
+const url = 'wss://relay.bf.lxc';
 
 export class BotConfig {
     globalRelay = [normalizeRelayUrl(gurl)];
