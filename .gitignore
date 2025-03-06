@@ -5,3 +5,8 @@
 
 /test/data/bbb/orig/
 .hide
+tsconfig.mjs.tsbuildinfo
+.npmrc
+localstorage
+tmp
+var

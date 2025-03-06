@@ -1,20 +1,28 @@
 {
   "name": "iz-seeder-bot",
   "type": "module",
-  "version": "0.0.2-snapshot.0",
-  "main": "index.js",
-  "module": "dist/index.js",
+  "version": "0.0.1",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
-    "start3": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index2.ts",
-    "build": "tsc",
-    "serve": "node dist/index.js"
+    "start3": "node --require ./dist/preload.cjs --loader ts-node/esm src/index.ts",
+    "build": "gts clean && node ./esbuild.config.js && cp ./src/preload.cjs dist/",
+    "docker": "npm run build && sudo ./build.sh",
+    "serve": "node --require ./dist/preload.cjs dist/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "ts-node": {
+    "experimentalSpecifierResolution": "nodenext",
+    "experimentalResolver": true,
+    "transpileOnly": false,
+    "esm": true,
+    "logError": true
+  },
   "devDependencies": {
     "@types/chai": "^5.0.1",
     "@types/fluent-ffmpeg": "^2.1.27",
@@ -24,8 +32,13 @@
     "@types/simple-peer": "^9.11.8",
     "@types/webtorrent": "^0.110.0",
     "chai": "^5.2.0",
+    "esbuild": "^0.25.0",
+    "gts": "^6.0.2",
     "mocha": "^10.8.2",
+    "rimraf": "^6.0.1",
+    "ts-mocha": "^11.1.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   },
   "dependencies": {
@@ -38,8 +51,7 @@
     "node-localstorage": "^3.0.5",
     "nostr-tools": "^2.10.4",
     "simple-peer": "^9.11.1",
-    "ts-mocha": "^10.0.0",
-    "tsx": "^4.19.2",
+    "tsc-multi": "^1.1.0",
     "webtorrent": "^2.5.12"
   }
 }
