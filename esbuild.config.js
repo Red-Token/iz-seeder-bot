@@ -8,6 +8,6 @@ await esbuild.build({
     format: 'esm',
     outdir: 'dist',
     sourcemap: false,
-    external: ['webtorrent', 'fluent-ffmpeg', 'simple-peer', 'iz-nostrlib'],
+    external: ['webtorrent', 'fluent-ffmpeg', 'simple-peer', 'iz-nostrlib', '@red-token/welshman'],
     minify: true
 })
