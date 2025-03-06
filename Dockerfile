@@ -10,5 +10,5 @@ RUN npm i --omit=dev
 
 COPY ./dist /dist
 
-CMD ["node", "--require", "$PWD/dist/preload.cjs", "/dist/index.js"]
+CMD ["node", "--require", "./dist/preload.cjs", "/dist/index.js"]
 #CMD ["npm", "run", "serve"]
