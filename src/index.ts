@@ -25,6 +25,7 @@ import fs from 'node:fs'
 import {BotConfig} from './config.js'
 import {setContext, ctx} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext, repository, tracker} from '@red-token/welshman/app'
+import {getPublicKey} from 'nostr-tools'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
@@ -65,13 +66,16 @@ const wt = new WebTorrent({
     }
 })
 
+console.log(botConfig.comRelay)
+
+
 setContext({
     app: getDefaultAppContext({
         requestDelay: 100,
         authTimeout: 500,
         requestTimeout: 5000,
         dufflepudUrl: 'https://api.example.com',
-        indexerRelays: botConfig.globalRelay,
+        indexerRelays: botConfig.globalRelay
     }),
     net: getDefaultNetContext({
 
@@ -106,7 +110,6 @@ export async function wait(time: number) {
 }
 
 
-
 // GlobalNostrContext.startUrls = botConfig.comRelay
 const gnc = new GlobalNostrContext(botConfig.globalRelay)
 
@@ -135,15 +138,15 @@ fs.readdirSync(botConfig.seedingDir).forEach((filename) => {
     const t = wt.seed(path.join(botConfig.seedingDir, filename), options)
     console.log(`Started seeding: ${filename}`)
 
-    t.on("infoHash", () => {
-        console.log(`Seeding hash: ${t.infoHash}`);
+    t.on('infoHash', () => {
+        console.log(`Seeding hash: ${t.infoHash}`)
     })
 
-    t.on("metadata", () => {
-        console.log(`Seeding hash: ${t.infoHash}`);
+    t.on('metadata', () => {
+        console.log(`Seeding hash: ${t.infoHash}`)
     })
 
-    console.log(`Started seeding: ${filename} + ${t.infoHash}`);
+    console.log(`Started seeding: ${filename} + ${t.infoHash}`)
 
 })
 
@@ -160,6 +163,16 @@ class RequestStateProgressTracker {
     }
 }
 
+export type Format = {
+    width: number,
+    height: number,
+    bitrate?: string,
+}
+
+export type Formats = {
+    [key: string]: Format
+}
+
 ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) => {
     console.log(event)
 
@@ -170,6 +183,29 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
 
         const state = {state: 'accepted', msg: `Processing request ${event.id} for ${req.x}`}
         rspt.updateState(state)
+
+        const formats: Formats = {
+            sd: {
+                width: 720,
+                height: 480
+                // bitrate: '1500k'
+            },
+            hd: {
+                width: 1280,
+                height: 720
+                // bitrate: '2500k'
+            },
+            fhd: {
+                width: 1920,
+                height: 1080
+                // bitrate: '5000k'
+            }
+            // uhd: {
+            //     width: 3840,
+            //     height: 2160,
+            //     // bitrate: '8000k'
+            // }
+        }
 
         const torrentPath = path.join(botConfig.uploadDir, randomUUID())
         mkdirSync(torrentPath, {recursive: true})
@@ -218,7 +254,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
             //TODO: Very primitive yes I know
             torrent.files
                 .filter((file) => {
-                    return file.name.endsWith('.mp4')
+                    return file.name.endsWith('.mp4') || file.name.endsWith('.mkv')
                 })
                 .forEach((file) => {
                     console.log(file)
@@ -228,7 +264,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     const id = req.event.id
                     const transcodingOutputDir = path.join(botConfig.transcodingDir, id)
 
-                    transcode(id, path.join(torrent.path, file.path), transcodingOutputDir).then(() => {
+                    transcode(path.join(torrent.path, file.path), transcodingOutputDir, formats).then(() => {
                         // TODO: This can be done earlier
                         // We are done transcoding, remove the torrent
                         const assetDir = path.join(botConfig.seedingDir, id)
@@ -263,7 +299,8 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
         })
     }
 
-    function transcode(id: string, inputFile: string, outputDir: string) {
+
+    function transcode(inputFile: string, outputDir: string, formats: Formats) {
         return new Promise((resolve) => {
             mkdirSync(outputDir, {recursive: true})
 
@@ -286,29 +323,6 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                 const videoStream = metadata.streams.find((s) => s.codec_type === 'video')
 
                 if (videoStream === undefined) throw new Error('No video stream')
-
-                const formats = {
-                    sd: {
-                        width: 720,
-                        height: 480
-                        // bitrate: '1500k'
-                    },
-                    hd: {
-                        width: 1280,
-                        height: 720
-                        // bitrate: '2500k'
-                    }
-                    // fhd: {
-                    //     width: 1920,
-                    //     height: 1080,
-                    //     // bitrate: '5000k'
-                    // },
-                    // uhd: {
-                    //     width: 3840,
-                    //     height: 2160,
-                    //     // bitrate: '8000k'
-                    // }
-                }
 
                 let complexFilterCommand = ''
                 Object.entries(formats).forEach(([key, value]) => {
