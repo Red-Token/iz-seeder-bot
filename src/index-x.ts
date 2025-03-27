@@ -1,5 +1,5 @@
 // src/index.ts
-import {hasValidSignature, normalizeRelayUrl, TrustedEvent} from '@red-token/welshman/util'
+import {TrustedEvent} from '@red-token/welshman/util'
 import {EventType} from 'iz-nostrlib'
 import {
     Nip9999SeederTorrentTransformationRequestEvent,
@@ -7,13 +7,13 @@ import {
     NostrCommunityServiceBot
 } from 'iz-nostrlib/seederbot'
 import {
-    GlobalNostrContext,
-    CommunityNostrContext,
     asyncCreateWelshmanSession,
+    CommunityNostrContext,
+    GlobalNostrContext,
     Identifier,
     Identity
 } from 'iz-nostrlib/communities'
-import {SignerData, SignerType, DynamicPublisher} from 'iz-nostrlib/ses'
+import {DynamicPublisher, SignerData, SignerType} from 'iz-nostrlib/ses'
 
 import WebTorrent from 'webtorrent'
 import SimplePeer from 'simple-peer'
@@ -23,9 +23,12 @@ import ffmpeg from 'fluent-ffmpeg'
 import path from 'node:path'
 import fs from 'node:fs'
 import {BotConfig} from './config.js'
-import {setContext, ctx} from '@red-token/welshman/lib'
+import {setContext} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext, repository, tracker} from '@red-token/welshman/app'
-import {getPublicKey} from 'nostr-tools'
+import {Nip01UserMetaDataEvent, NostrUserProfileMetaData, UserType} from 'iz-nostrlib/nip01'
+import {Nip65RelayListMetadataEvent} from 'iz-nostrlib/nip65'
+import { TranscodingBot } from './bot/TranscodingBot.js'
+import {RequestStateProgressTracker} from './util/util.js'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
@@ -68,7 +71,6 @@ const wt = new WebTorrent({
 
 console.log(botConfig.comRelay)
 
-
 setContext({
     app: getDefaultAppContext({
         requestDelay: 100,
@@ -78,7 +80,6 @@ setContext({
         indexerRelays: botConfig.globalRelay
     }),
     net: getDefaultNetContext({
-
 
         // Track deleted events
         isDeleted: (url, event) => repository.isDeleted(event),
@@ -150,19 +151,6 @@ fs.readdirSync(botConfig.seedingDir).forEach((filename) => {
 
 })
 
-class RequestStateProgressTracker {
-    constructor(
-        private readonly id: string,
-        private readonly publisher: DynamicPublisher
-    ) {
-    }
-
-    updateState(state: any, tags: string[][] = []) {
-        const e2 = new Nip9999SeederTorrentTransformationResponseEvent(state, this.id, tags)
-        this.publisher.publish(e2)
-    }
-}
-
 export type Format = {
     width: number,
     height: number,
@@ -172,6 +160,27 @@ export type Format = {
 export type Formats = {
     [key: string]: Format
 }
+
+// Register the bot as a bot
+function register() {
+    const id = new Identity(gnc, botIdentifier)
+    const dp = new DynamicPublisher(gnc.profileService, id)
+    const userData = new NostrUserProfileMetaData()
+
+    userData.name = 'Bot'
+    userData.about = 'About'
+    userData.bot = true
+
+    const nip01UserMetaDataEvent = new Nip01UserMetaDataEvent(userData, UserType.SERVICE, [['nip9999']])
+    const nip65RelayListMetadataEvent = new Nip65RelayListMetadataEvent([botConfig.comRelay])
+
+    dp.publish(nip01UserMetaDataEvent)
+    dp.publish(nip65RelayListMetadataEvent)
+}
+
+register()
+
+const bot: TranscodingBot = new TranscodingBot(botConfig, wt)
 
 ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) => {
     console.log(event)
@@ -183,6 +192,8 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
 
         const state = {state: 'accepted', msg: `Processing request ${event.id} for ${req.x}`}
         rspt.updateState(state)
+
+        bot.transcode(req, rspt)
 
         const formats: Formats = {
             sd: {
@@ -224,7 +235,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
             console.log(`download torrent ${bytes} ${torrent.progress * 100}`)
             const now = new Date().getTime()
 
-            if (torrent.done || now - oldTime < 300) return
+            if (torrent.done || now - oldTime < 3000) return
 
             oldTime = now
 
@@ -288,11 +299,11 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                         })
 
                         outTorrent.on('error', (error) => {
-                            console.log(error)
+                            console.log('Error:' + error)
                         })
 
                         outTorrent.on('warning', (warning) => {
-                            console.log(warning)
+                            console.log('Warn' + warning)
                         })
                     })
                 })
@@ -329,7 +340,9 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     complexFilterCommand += `[0:v]scale=${value.width}x${value.height}[${key}];`
                 })
 
-                let cmd = ffmpeg(inputFile).complexFilter(complexFilterCommand)
+                const subtitleFile = '/tmp/The Borgias (2011) S01E06.en.srt'
+
+                let cmd = ffmpeg(inputFile).addInput(subtitleFile).complexFilter(complexFilterCommand)
                 let i = 1
                 const videoCodec = 'libx264'
 
@@ -342,9 +355,14 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     i++
                 })
 
+                // Audio
                 const audioCodec = 'aac'
                 const audioBitrate = '128k'
                 cmd = cmd.addOption('-map', '0:a').addOption(`-c:a ${audioCodec}`).addOption(`-b:a ${audioBitrate}`)
+
+                // Subtitles
+                const subCodec = 'webtt'
+                cmd = cmd.addOption('-map', '1:s?').addOption(`-c:s ${subCodec}`)
 
                 const outfile = path.join(outputDir, 'asset.mpd')
 

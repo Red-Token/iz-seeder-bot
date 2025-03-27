@@ -1,66 +1,105 @@
-// src/index.ts
-import {
-    EventType,
-    SignerData,
-    SignerType
-} from "iz-nostrlib";
-import WebTorrent from "webtorrent";
-import SimplePeer from "simple-peer";
-import {randomUUID} from "node:crypto";
-import {mkdirSync} from "fs";
-import ffmpeg from 'fluent-ffmpeg';
-import path from "node:path";
-import fs from "node:fs";
-import {GlobalNostrContext, asyncCreateWelshmanSession, Identifier, Identity, CommunityNostrContext} from "iz-nostrlib/communities";
-import {BotConfig} from "./config.js";
-import {DynamicPublisher} from "iz-nostrlib/ses";
-import {Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot} from "iz-nostrlib/seederbot";
-import {setContext} from "@red-token/welshman/lib";
-import {getDefaultAppContext, getDefaultNetContext} from "@red-token/welshman/app";
-import {normalizeRelayUrl, TrustedEvent} from "@red-token/welshman/util";
+import {setDefaultResultOrder} from 'node:dns'
+import * as dns from 'node:dns'
+import {DownloadRequestData, download, search, fetchAndSave} from './api/opensubtitles/api.js'
+import path from 'node:path'
 
-console.log("Starting...");
+// setDefaultResultOrder('ipv4first')
+// dns.setServers(['8.8.8.8', '1.1.1.1']) // Google DNS and Cloudflare DNS
 
-const rtcConfig = {
-    iceServers: [
-        {
-            urls: [
-                "turn:turn.stream.labs.h3.se",
-            ],
-            username: "test",
-            credential: "testme",
-        },
-        {
-            urls:
-                ["stun:stun.stream.labs.h3.se"],
-            username: "test",
-            credential: "testme",
-        }],
-    iceTransportPolicy: "all",
-    iceCandidatePoolSize: 0,
+// async function callApi2(url: string, data: any) {
+//     const apiKey = 'AC4yKqlvJqVYFgQxv757DDP8A6qvvMvF'
+//     const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBNmJ1QVdpangxMVA3U21HNGJ6cUJsU3JmWlBvNlVSUiIsImV4cCI6MTc0MjgwNTgxOH0.UwhtqvemW4zUALUSuCjkjTJSVr16X-2F5Rwnqu-jAjs'
+//
+//     const options = {
+//         method: 'POST',
+//         headers: {
+//             'Api-Key': apiKey,
+//             'Authorization': `Bearer ` + token,
+//             'Content-Type': 'application/json',
+//             'User-Agent': 'MyApp v1.0'
+//         },
+//         body: JSON.stringify(data)
+//     }
+//
+//     return await new Promise((resolve, reject) => {
+//         fetch(url, options).then(res => {
+//             if (res.ok) res.json().then(res => {
+//                 resolve(res)
+//             })
+//         }).catch(err => {
+//             console.log(err)
+//             // reject(err)
+//         })
+//     })
+//
+//     // throw new Error('Could not find info')
+// }
+
+// async function callApi(url: string) {
+//     const apiKey = 'AC4yKqlvJqVYFgQxv757DDP8A6qvvMvF'
+//
+//     const options = {
+//         headers: {
+//             'Api-Key': apiKey,
+//             'User-Agent': 'MyApp v1.0'
+//         }
+//     }
+//
+//     return await new Promise((resolve, reject) => {
+//         fetch(url, options).then(res => {
+//             if (res.ok) res.json().then(res => {
+//                 resolve(res)
+//             })
+//         }).catch(err => {
+//             console.log(err)
+//             // reject(err)
+//         })
+//     })
+//
+//     // throw new Error('Could not find info')
+// }
+
+const res: any = await search('tt1835736', 'en')
+
+console.log(res)
+
+const data: DownloadRequestData = {
+    file_id: res.data[0].attributes.files[0].file_id
 }
 
-const options = {
-    announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
-    maxWebConns: 500
-};
+const res2: any = await download(data)
 
-const wt = new WebTorrent({
-    tracker: {
-        rtcConfig: {
-            ...SimplePeer.config,
-            ...rtcConfig
-        }
-    },
-});
+console.log(res2)
 
-setContext({
-    net: getDefaultNetContext(),
-    app: getDefaultAppContext()
-});
+await fetchAndSave(res2.link, path.join('/tmp/', res2.file_name))
 
-const botConfig = new BotConfig()
+console.log("THE END")
 
+// callApi('https://api.opensubtitles.com/api/v1/subtitles?imdb_id=tt1835736&languages=en').then((res: any) => {
+//         console.log(res)
+//
+//         const file_id = res.data[0].attributes.files[0].file_id
+//
+//         const data = {
+//             file_id
+//         }
+//
+//         callApi2('https://api.opensubtitles.com/api/v1/download', data).then(res => {
+//             console.log(res)
+//         })
+//     }
+// )
 
-console.log("BOT STARTED DONE")
+//https://www.opensubtitles.com/download/CC45751B345711D157BA82BDCA2379065D9C9EB994EFB2498355B7536D5CCA3D9D51618116D2440DFA8ABE2FA21A839E5CAB91758FF4FDDE677A02270DF71D83258F629461C2DD1273E8E22DE5CA3750DDDE632F2FE6831E6203898CEC6A9D5FC6A8FE14FBB8D61CDBBBAC472F2A66E8BE474803AA7EE884F244F42A86F503402D605584177D643398CC81F18DD8EC1FAD61B2DDB09991D9DB716677948619C8E0ACFD394FE27E0D90FC4468A7DD6A93411EB93EE7DC467729F8A17BA13F877566AB33C26AC62C234C9552EA502623703EABA6CD5C3B077E024CE071AFB976DE66DD39F85DB746C38F474FFE2F33DC54DBF4D844A47358E9BFB9543C03CD41A5FCA07F4A988500B0DD12A9AF1923786F5DF4866D2D9E2D745EDD686EB8914C0325EE6367F5E6AECD/subfile/The%20Borgias%20(2011)%20S01E06.en.srt
+
+//"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBNmJ1QVdpangxMVA3U21HNGJ6cUJsU3JmWlBvNlVSUiIsImV4cCI6MTc0MjgwNTgxOH0.UwhtqvemW4zUALUSuCjkjTJSVr16X-2F5Rwnqu-jAjs"
+//eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBNmJ1QVdpangxMVA3U21HNGJ6cUJsU3JmWlBvNlVSUiIsImV4cCI6MTc0MjgwNTgxOH0.UwhtqvemW4zUALUSuCjkjTJSVr16X-2F5Rwnqu-jAjs
+// 9211371
+
+// const data = {
+//     file_id: 9211371
+// }
+
+// callApi2('https://api.opensubtitles.com/api/v1/download', data).then(res => {
+//     console.log(res)
+// })
