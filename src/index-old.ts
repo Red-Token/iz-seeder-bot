@@ -202,6 +202,7 @@ ncs.session.eventStream.emitter.on(EventType.DISCOVERED, (event: TrustedEvent) =
                     // We are done transcoding, remove the torrent
                     const assetDir = path.join(seedingDir, id)
                     wt.remove(req.x)
+
                     fs.rename(transcodingOutputDir, assetDir, (err) => {
                         if (err === undefined || err === null) return
 

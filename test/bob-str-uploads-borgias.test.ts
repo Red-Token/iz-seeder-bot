@@ -1,7 +1,7 @@
 import SimplePeer from 'simple-peer'
 import WebTorrent, {Torrent} from 'webtorrent'
 // import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
-import {nip19} from 'nostr-tools'
+import {getPublicKey, nip19} from 'nostr-tools'
 import {BotConfig} from '../src/config.js'
 // import {SignerData} from "iz-nostrlib/src/org/nostr/ses/SynchronisedSession";
 import {SignerType} from 'iz-nostrlib/ses'
@@ -22,7 +22,7 @@ import {Identity} from 'iz-nostrlib/communities'
 import {asyncCreateWelshmanSession, Identifier} from 'iz-nostrlib/communities'
 import {EventType} from 'iz-nostrlib'
 import {TrustedEvent} from '@red-token/welshman/util'
-import {RequestStateProgressTracker, wait} from '../src/util/util.js'
+import {RequestStateProgressTracker} from '../src/util/util.js'
 import {setContext} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext} from '@red-token/welshman/app'
 
@@ -84,6 +84,14 @@ const wt = new WebTorrent({
     }
 })
 
+export async function wait(time: number) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(true)
+        }, time)
+    })
+}
+
 async function getTorrentHash(torrent: Torrent): Promise<string> {
     return new Promise(resolve => {
         if (torrent.infoHash !== undefined) resolve(torrent.infoHash)
@@ -98,7 +106,7 @@ describe('MyTest', () => {
     before(function() {
     })
 
-    it('DASH a movie', async () => {
+    it('DASH a movie remote2', async () => {
         // const url = 'wss://relay.stream.labs.h3.se';
         // const relays = [normalizeRelayUrl(url)];
         setContext({
@@ -106,26 +114,7 @@ describe('MyTest', () => {
             app: getDefaultAppContext()
         })
 
-
         const botConfig = new BotConfig()
-        const botSeckey = nip19.decode(botConfig.nsec)
-
-        if (botSeckey.type !== 'nsec')
-            throw Error('')
-
-        const wt2 = new WebTorrent({
-            tracker: {
-                rtcConfig: {
-                    ...SimplePeer.config,
-                    ...rtcConfig
-                }
-            }
-        })
-
-        const tb = new TranscodingBot(botConfig, wt)
-
-        // const dss = new DynamicSynchronisedSession(botConfig.comRelay)
-        // const ds = new DynamicPublisher(dss)
 
         const globalNostrContext = new GlobalNostrContext(botConfig.globalRelay)
 
@@ -142,21 +131,12 @@ describe('MyTest', () => {
         const bobCommunityNosterContext = new CommunityNostrContext(botConfig.communityPubkey, globalNostrContext)
         const bobNostrCommunityServiceClient = new NostrCommunityServiceClient(bobCommunityNosterContext, bobIdentity)
 
-        // Bot nostr client
-        const botSignerData: SignerData = {type: SignerType.NIP01, nsec: botConfig.nsec}
-        const botWs = await asyncCreateWelshmanSession(botSignerData)
-        const botIdentifier = new Identifier(botWs)
-        const botIdentity = new Identity(globalNostrContext, botIdentifier)
-
-        const botCommunityNosterContext = new CommunityNostrContext(botConfig.communityPubkey, globalNostrContext)
-        const nostrCommunityServiceBot = new NostrCommunityServiceBot(botCommunityNosterContext, botIdentity)
-
         // Start the test
-        const origFile = 'test/data/sintel/orig/Sintel.2010.1080p.mkv'
-        const imdbId = 'tt1727587'
+        const origFile = '/tmp/tbs01e06.mkv'
+        const imdbId = 'tt1835736'
 
         // const t = wt2.seed('./tmp/orig_mov.mkv')
-        const torrent = wt2.seed(origFile)
+        const torrent = wt.seed(origFile)
 
         const hash = await getTorrentHash(torrent)
 
@@ -176,14 +156,10 @@ describe('MyTest', () => {
             formats: f
         }
 
-        nostrCommunityServiceBot.session.eventStream.emitter.on(EventType.DISCOVERED, async (event: TrustedEvent) => {
-            const ne = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
-            await tb.transcode(ne, new RequestStateProgressTracker(event.id, nostrCommunityServiceBot.publisher))
-        })
+        const decodeResult = nip19.decode(botConfig.nsec).data as Uint8Array
+        const pubkey = getPublicKey(decodeResult)
 
-        await wait(2000)
-
-        const event = new Nip9999SeederTorrentTransformationRequestEvent(botIdentifier.pubkey, 'Sintel', hash, tr)
+        const event = new Nip9999SeederTorrentTransformationRequestEvent(pubkey, 'The Borgias XXXX', hash, tr)
         const {dss, pub} = bobNostrCommunityServiceClient.request(event)
 
         dss.eventStream.emitter.on(EventType.DISCOVERED, async (event: TrustedEvent) => {
