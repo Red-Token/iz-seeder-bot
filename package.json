@@ -47,7 +47,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@red-token/welshman": "^0.2.7",
+    "@red-token/welshman": "^0.2.9",
     "@testdeck/mocha": "^0.3.3",
     "fast-xml-parser": "^5.0.9",
     "fluent-ffmpeg": "^2.1.3",
