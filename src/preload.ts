@@ -1,2 +1,2 @@
-// const { LocalStorage } = require('node-localstorage');
-// global.localStorage = new LocalStorage('./localstorage');
+import {LocalStorage} from 'node-localstorage'
+global.localStorage = new LocalStorage('./localstorage')

@@ -1,0 +1,11 @@
+services:
+  iz-seeder-bot:
+    build: .
+    image: ivnjey/iz-seeder-bot:${VERSION}
+    container_name: iz-seeder-bot
+    volumes:
+      - ./config.json:/config.json
+      - /tmp/iz-seeder-bot/upload:/tmp/iz-seeder-bot/upload
+      - /tmp/iz-seeder-bot/transcoding:/tmp/iz-seeder-bot/transcoding
+      - /var/tmp/iz-seeder-bot/seeding:/tmp/iz-seeder-bot/seeding
+    restart: unless-stopped
