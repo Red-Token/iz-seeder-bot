@@ -8,13 +8,10 @@
     "test": "NODE_OPTIONS='--loader=ts-node/esm --require mock-local-storage' mocha 'test/**/*.test.ts'",
     "distformat": "npx prettier --write dist --ignore-path /dev/null",
     "start": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
-    "start2": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index2.ts",
-    "start3": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/indext3.ts",
-    "start-old": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index-old.ts",
-    "start4": "node --require ./dist/preload.cjs --loader ts-node/esm src/index.ts",
     "build": "gts clean && node ./esbuild.config.js && npm run distformat",
     "docker": "npm run build && sudo ./build.sh",
-    "serve": "node --require ./dist/preload.cjs dist/index.js"
+    "serve": "node --require ./dist/preload.cjs dist/index.js",
+    "server": "npm run build && npm run serve"
   },
   "keywords": [],
   "author": "",

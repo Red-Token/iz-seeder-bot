@@ -10,14 +10,12 @@ export type Language = {
     name: string
 }
 
-
 export const languages: Languages = {
     en: {short: 'en', name: 'English'}
 }
 
 export class SubtitleConverter {
     async convert(inputFile: string, outputFile: string, lang: Language) {
-
         const tmpFile = `/tmp/subtitles-${lang.short}.vtt`
 
         await new Promise((resolve, reject) => {
@@ -29,7 +27,7 @@ export class SubtitleConverter {
                 .on('progress', (progress) => {
                     console.log('progress: ', progress)
                 })
-                .on('error', err => {
+                .on('error', (err) => {
                     console.error(err)
                     reject(err)
                 })
@@ -44,12 +42,11 @@ export class SubtitleConverter {
                 .addOption('-add', `${tmpFile}:lang=${lang.short}:name="${lang.name}"`)
                 .addOption('-new')
                 .addOption(outputFile)
-                .on('start', (commandLine) => {
-                })
+                .on('start', (commandLine) => {})
                 .on('progress', (progress) => {
                     console.log('progress: ', progress)
                 })
-                .on('error', err => {
+                .on('error', (err) => {
                     console.error(err)
                     reject(err)
                 })
@@ -58,6 +55,5 @@ export class SubtitleConverter {
                 })
                 .run()
         })
-
     }
 }
