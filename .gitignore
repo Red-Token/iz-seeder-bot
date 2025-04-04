@@ -10,3 +10,5 @@ tsconfig.mjs.tsbuildinfo
 localstorage
 tmp
 var
+/config.devel.json
+/config.json

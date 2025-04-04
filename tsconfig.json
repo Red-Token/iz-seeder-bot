@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
+
+      "module": "NodeNext",
+      "rootDirs": [
+      "./src",
+    ],
+    "resolveJsonModule": true,
     "target": "ESNext",
-    "module": "NodeNext",
     "moduleResolution": "nodenext",
     "rootDir":"./src",
     "outDir": "./dist",
@@ -21,10 +26,12 @@
     "stripInternal": true,
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "test/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "test/**/*"
   ],
 }
