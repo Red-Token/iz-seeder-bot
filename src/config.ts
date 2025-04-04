@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs'
+import fs, {readFileSync} from 'node:fs'
 import {normalizeRelayUrl} from '@red-token/welshman/util'
 
 export class BotConfig {
@@ -11,7 +11,17 @@ export class BotConfig {
     public readonly globalRelay: string[]
 
     constructor() {
-        const config = readFileSync('./config.json', 'utf8')
+
+        const alternativeConfigFileNames = ['config.devel.json', 'config.json', 'config.default.json']
+
+        alternativeConfigFileNames.find(fileName => fs.existsSync(`${__dirname}/${fileName}`))
+        const confFile = alternativeConfigFileNames.map(fileName => `${__dirname}/${fileName}`).find(fullFileName => fs.existsSync(fullFileName))
+
+        if (!confFile) {
+            throw new ReferenceError('conf file not found')
+        }
+
+        const config = readFileSync(confFile, 'utf8')
         const parsed = JSON.parse(config)
 
         if (typeof parsed.nsec !== 'string') {
