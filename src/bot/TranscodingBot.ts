@@ -66,18 +66,53 @@ export class CombinedProgressReporter extends ProgressReporter {
     }
 }
 
-export class TranscodingBot {
+const defaultTorrentOptions: TorrentOptions = {
+    announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
+    maxWebConns: 500
+}
+
+export class SeedingBot {
+
+    constructor(protected botConfig: BotConfig, protected wt: WebTorrent.Instance) {
+        mkdirSync(this.botConfig.seedingDir, {recursive: true})
+    }
+
+    async loadTorrents() {
+        for (const filename of fs.readdirSync(this.botConfig.seedingDir)) {
+            console.log(`Loading: ${filename}`)
+
+            try {
+                const torrentDir = path.join(this.botConfig.seedingDir, filename)
+                const hash = await this.loadTorrent(torrentDir)
+
+                console.log(`Started seeding: ${filename} as ${hash}`)
+
+            } catch (e) {
+                console.error(e)
+            }
+        }
+    }
+
+    async loadTorrent(torrentDir: string, options?: TorrentOptions): Promise<string> {
+
+        // Check if the dir is empty
+        if (fs.readdirSync(torrentDir).length === 0) {
+            throw new Error('Empty torrentdir: ' + torrentDir)
+        }
+
+        const t = this.wt.seed(torrentDir, {...defaultTorrentOptions, ...options})
+
+        return waitForInfoHash(t)
+    }
+}
+
+export class TranscodingBot extends SeedingBot {
 
     rateLimit = 1000
     lastReport = 0
 
-    constructor(private botConfig: BotConfig, private wt: WebTorrent.Instance) {
-    }
-
     async transcode(req: Nip9999SeederTorrentTransformationRequestEvent, rspt: RequestStateProgressTracker) {
-
         try {
-
             const reqConfig: TranscodingRequest = req.content
 
             // type RequestState = {
