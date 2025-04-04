@@ -22,8 +22,7 @@ const botSeckey = nip19.decode(botConfig.nsec)
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-if (botSeckey.type !== 'nsec')
-    throw Error('')
+if (botSeckey.type !== 'nsec') throw Error('')
 
 setContext({
     net: getDefaultNetContext(),

@@ -7,6 +7,7 @@ export class BotConfig {
     public readonly nsec: string
     public readonly communityPubkey: string
     public readonly comRelay: string[]
+    public readonly botDir: string
     public readonly uploadDir: string
     public readonly transcodingDir: string
     public readonly seedingDir: string
@@ -68,7 +69,7 @@ export class BotConfig {
             throw new Error('comRelay must be a string or an array of strings')
         }
 
-
+        this.botDir = typeof parsed.botDir === 'string' ? parsed.botDir : '/tmp/iz-seeder-bot'
         this.uploadDir = typeof parsed.uploadDir === 'string' ? parsed.uploadDir : '/tmp/iz-seeder-bot/upload'
         this.transcodingDir =
             typeof parsed.transcodingDir === 'string' ? parsed.transcodingDir : '/tmp/iz-seeder-bot/transcoding'

@@ -3,7 +3,7 @@ import * as esbuild from 'esbuild'
 await esbuild
     .build({
         entryPoints: ['src/index.ts'],
-        bundle: true, //TODO change to true
+        bundle: true,
         target: 'node22',
         platform: 'node',
         format: 'esm',

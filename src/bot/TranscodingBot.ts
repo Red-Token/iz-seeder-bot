@@ -14,23 +14,22 @@ import {patchMpd} from '../util/BugFixer.js'
 import {RequestStateProgressTracker, waitForInfoHash} from '../util/util.js'
 
 export type Subtitle = {
-    lang: Language,
+    lang: Language
     file?: string
 }
 
 export type TranscodingRequest = {
-    file: string,
-    formats: Formats,
-    subtitles: Subtitle[],
-    imdbId?: string,
+    file: string
+    formats: Formats
+    subtitles?: Subtitle[]
+    imdbId?: string
 }
 
 export class ProgressReporter extends EventEmitter {
     private _progress: number = 0
 
     set progress(value: number) {
-        if (this._progress >= value && 100 > value)
-            return
+        if (this._progress >= value && 100 > value) return
 
         if (value === 100) {
             this.done()
@@ -46,8 +45,7 @@ export class ProgressReporter extends EventEmitter {
     }
 
     done() {
-        if (this._progress === 100)
-            return
+        if (this._progress === 100) return
 
         this._progress = 100
         this.emit('done')
@@ -60,8 +58,9 @@ export class CombinedProgressReporter extends ProgressReporter {
     add(reporter: ProgressReporter) {
         this._progressReporters.push(reporter)
         reporter.on('progress', () => {
-            this.progress = this._progressReporters
-                .reduce((sum: number, reporter) => sum + reporter.progress, 0) / this._progressReporters.length
+            this.progress =
+                this._progressReporters.reduce((sum: number, reporter) => sum + reporter.progress, 0) /
+                this._progressReporters.length
         })
     }
 }
@@ -72,8 +71,10 @@ const defaultTorrentOptions: TorrentOptions = {
 }
 
 export class SeedingBot {
-
-    constructor(protected botConfig: BotConfig, protected wt: WebTorrent.Instance) {
+    constructor(
+        protected botConfig: BotConfig,
+        protected wt: WebTorrent.Instance
+    ) {
         mkdirSync(this.botConfig.seedingDir, {recursive: true})
     }
 
@@ -86,7 +87,6 @@ export class SeedingBot {
                 const hash = await this.loadTorrent(torrentDir)
 
                 console.log(`Started seeding: ${filename} as ${hash}`)
-
             } catch (e) {
                 console.error(e)
             }
@@ -94,7 +94,6 @@ export class SeedingBot {
     }
 
     async loadTorrent(torrentDir: string, options?: TorrentOptions): Promise<string> {
-
         // Check if the dir is empty
         if (fs.readdirSync(torrentDir).length === 0) {
             throw new Error('Empty torrentdir: ' + torrentDir)
@@ -107,13 +106,13 @@ export class SeedingBot {
 }
 
 export class TranscodingBot extends SeedingBot {
-
     rateLimit = 1000
     lastReport = 0
 
     async transcode(req: Nip9999SeederTorrentTransformationRequestEvent, rspt: RequestStateProgressTracker) {
         try {
             const reqConfig: TranscodingRequest = req.content
+            console.warn(JSON.stringify(reqConfig))
 
             // type RequestState = {
             //     state: string, msg: string, progress?: number, final?: boolean
@@ -128,7 +127,6 @@ export class TranscodingBot extends SeedingBot {
                 final: false
             }
 
-
             // Create the upload dir
             const uuid = randomUUID()
             const tempAssetPath = path.join(this.botConfig.uploadDir, uuid)
@@ -138,9 +136,15 @@ export class TranscodingBot extends SeedingBot {
             const seedingPath = path.join(this.botConfig.seedingDir, uuid)
 
             mkdirSync(torrentPath, {recursive: true})
+            mkdirSync(dashingPath, {recursive: true})
+            mkdirSync(transcodingPath, {recursive: true})
 
             const options: TorrentOptions = {
-                announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
+                announce: [
+                    'wss://tracker.webtorrent.dev',
+                    'wss://tracker.btorrent.xyz',
+                    'wss://tracker.openwebtorrent.com'
+                ],
                 maxWebConns: 500,
                 path: torrentPath
             }
@@ -158,11 +162,13 @@ export class TranscodingBot extends SeedingBot {
                 const now = new Date().getTime()
                 sumBytes += bytes
 
-                if (torrent.done || now - lastReport < this.rateLimit)
-                    return
+                if (torrent.done || now - lastReport < this.rateLimit) return
 
                 console.log(`download torrent ${bytes} ${torrent.progress * 100}`)
-                rspt.update({progress: torrent.progress * 100, message: `Downloading torrent ${torrent.progress} done`})
+                rspt.update({
+                    progress: torrent.progress * 100,
+                    message: `Downloading torrent ${torrent.progress} done`
+                })
 
                 lastReport = now
                 sumBytes = 0
@@ -175,44 +181,46 @@ export class TranscodingBot extends SeedingBot {
             this.wt.remove(torrent.infoHash)
 
             const videos: string[] = []
-            const subtitles: string[] = []
+            const subtitles: string[] | undefined = []
 
             // Download subtitles
-            rspt.update({state: 'subtitles', seq: 3, progress: 0, message: `Processing subtitles`})
+            if (reqConfig.subtitles) {
+                rspt.update({state: 'subtitles', seq: 3, progress: 0, message: `Processing subtitles`})
 
-            const fraq = (100 / reqConfig.subtitles.length)
-            for (const [i, subtitle] of reqConfig.subtitles.entries()) {
-                const file = subtitle.file ?? `subtitles_${subtitle.lang.short}.srt`
-                const subtitleFile = path.join(torrentPath, file)
+                const fraq = 100 / reqConfig.subtitles.length
+                for (const [i, subtitle] of reqConfig.subtitles.entries()) {
+                    const file = subtitle.file ?? `subtitles_${subtitle.lang.short}.srt`
+                    const subtitleFile = path.join(torrentPath, file)
 
-                if (!fs.existsSync(subtitleFile) && reqConfig.imdbId) {
+                    if (!fs.existsSync(subtitleFile) && reqConfig.imdbId) {
+                        rspt.update({
+                            progress: i * fraq + 1,
+                            message: `Downloading subtitle ${subtitle.lang.short}.srt`
+                        })
+
+                        await searchAndDownloadSubtitles(req.content.imdbId, subtitle.lang, subtitleFile)
+                    }
+
                     rspt.update({
-                        progress: i * fraq + 1,
-                        message: `Downloading subtitle ${subtitle.lang.short}.srt`
+                        progress: (i + 0.5) * fraq,
+                        message: `Processed subtitle ${subtitle.lang.short}.srt`
                     })
 
-                    await searchAndDownloadSubtitles(req.content.imdbId, subtitle.lang, subtitleFile)
+                    const sconv = new SubtitleConverter()
+
+                    // Convert the subtitle
+                    const outputFile = path.join(transcodingPath, `subtitles_${subtitle.lang.short}.mp4`)
+                    subtitles.push(outputFile)
+                    // TODO convert this
+                    await sconv.convert(subtitleFile, outputFile, subtitle.lang)
+
+                    rspt.update({
+                        progress: (i + 1) * fraq,
+                        message: `Processed subtitle ${subtitle.lang.short}.srt`
+                    })
                 }
-
-                rspt.update({
-                    progress: (i + 0.5) * fraq,
-                    message: `Processed subtitle ${subtitle.lang.short}.srt`
-                })
-
-                const sconv = new SubtitleConverter()
-
-                // Convert the subtitle
-                const outputFile = path.join(transcodingPath, `subtitles_${subtitle.lang.short}.mp4`)
-                subtitles.push(outputFile)
-                // TODO convert this
-                await sconv.convert(subtitleFile, outputFile, subtitle.lang)
-
-                rspt.update({
-                    progress: (i + 1) * fraq,
-                    message: `Processed subtitle ${subtitle.lang.short}.srt`
-                })
+                rspt.update({progress: 100, message: 'Subtitles processed'})
             }
-            rspt.update({progress: 100, message: 'Subtitles processed'})
 
             // Transcode
             {
@@ -226,20 +234,21 @@ export class TranscodingBot extends SeedingBot {
                 cpr.on('progress', () => {
                     const now = new Date().getTime()
 
-                    if (now - lastReport < this.rateLimit)
-                        return
+                    if (now - lastReport < this.rateLimit) return
 
                     rspt.update({progress: cpr.progress})
                 })
 
                 // we execute all of these in parallel
-                await Promise.all(Object.entries(reqConfig.formats).map((val) => {
-                    const reporter = new ProgressReporter()
-                    cpr.add(reporter)
-                    const outputFile = path.join(transcodingPath, `video_${val[0]}.mp4`)
-                    videos.push(outputFile)
-                    return converter.convert(inputFile, outputFile, val[1], reporter)
-                }))
+                await Promise.all(
+                    Object.entries(reqConfig.formats).map((val) => {
+                        const reporter = new ProgressReporter()
+                        cpr.add(reporter)
+                        const outputFile = path.join(transcodingPath, `video_${val[0]}.mp4`)
+                        videos.push(outputFile)
+                        return converter.convert(inputFile, outputFile, val[1], reporter)
+                    })
+                )
             }
 
             // Dash
@@ -248,7 +257,7 @@ export class TranscodingBot extends SeedingBot {
 
                 const dasher = new Dasher()
                 const mpdFile = path.join(dashingPath, 'manifest.mpd')
-                await dasher.dash(videos, subtitles, mpdFile)
+                await dasher.dash(videos, mpdFile, subtitles)
                 patchMpd(mpdFile)
 
                 rspt.update({progress: 100, message: `Dashing is done`})
@@ -265,18 +274,21 @@ export class TranscodingBot extends SeedingBot {
 
                 mkdirSync(seedingPath, {recursive: true})
                 // const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
-                const files = fs.readdirSync(seedingPath).map(fileName => path.join(seedingPath, fileName))
+                const files = fs.readdirSync(seedingPath).map((fileName) => path.join(seedingPath, fileName))
                 const outTorrent = this.wt.seed(files, options)
 
                 rspt.update({progress: 10, message: `Asset moved, waiting for infoHash`})
 
                 const hash = await waitForInfoHash(outTorrent)
 
-                rspt.update({
-                    progress: 100,
-                    final: true,
-                    message: `Transcoding has been done, starting to seed at ${hash}`
-                }, [['x', outTorrent.infoHash]])
+                rspt.update(
+                    {
+                        progress: 100,
+                        final: true,
+                        message: `Transcoding has been done, starting to seed at ${hash}`
+                    },
+                    [['x', outTorrent.infoHash]]
+                )
 
                 outTorrent.on('error', (error) => {
                     console.error(error)
@@ -298,7 +310,7 @@ export class TranscodingBot extends SeedingBot {
                 resolve()
             })
 
-            torrent.on('error', err => {
+            torrent.on('error', (err) => {
                 reject(err)
             })
         })

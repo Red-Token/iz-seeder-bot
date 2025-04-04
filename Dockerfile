@@ -1,5 +1,5 @@
 FROM node:22
-RUN apt update && apt install -y --no-install-recommends ffmpeg && \
+RUN apt update && apt install -y --no-install-recommends ffmpeg gpac &&
     rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json* ./

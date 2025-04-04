@@ -3,9 +3,9 @@ import ffmpeg from 'fluent-ffmpeg'
 import {ProgressReporter} from '../bot/TranscodingBot.js'
 
 export type Format = {
-    width: number,
-    height: number,
-    video_bitrate?: string,
+    width: number
+    height: number
+    video_bitrate?: string
 }
 
 export type Formats = {
@@ -36,13 +36,11 @@ export const formats: Formats = {
 }
 
 export class VideoConverter {
-
     videoCodec = 'libx264'
     audioCodec = 'aac'
     audioBitrate = '128k'
 
-    constructor(private preset = 'ultrafast') {
-    }
+    constructor(private preset = 'ultrafast') {}
 
     async convert(input: string, output: string, format: Format, reporter?: ProgressReporter) {
         await new Promise<void>((resolve, reject) => {
@@ -82,7 +80,7 @@ export class VideoConverter {
                     console.log('progress: ', progress)
                     if (reporter !== undefined) reporter.progress = progress.percent ?? 0
                 })
-                .on('error', err => reject(err))
+                .on('error', (err) => reject(err))
                 .on('end', () => {
                     if (reporter !== undefined) reporter.done()
                     resolve()
@@ -91,5 +89,3 @@ export class VideoConverter {
         })
     }
 }
-
-
