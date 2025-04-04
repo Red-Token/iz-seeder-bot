@@ -1,5 +1,7 @@
 import fs, {readFileSync} from 'node:fs'
 import {normalizeRelayUrl} from '@red-token/welshman/util'
+import {fileURLToPath} from 'node:url'
+import path from 'node:path'
 
 export class BotConfig {
     public readonly nsec: string
@@ -14,8 +16,8 @@ export class BotConfig {
 
         const alternativeConfigFileNames = ['config.devel.json', 'config.json', 'config.default.json']
 
-        alternativeConfigFileNames.find(fileName => fs.existsSync(`${__dirname}/${fileName}`))
-        const confFile = alternativeConfigFileNames.map(fileName => `${__dirname}/${fileName}`).find(fullFileName => fs.existsSync(fullFileName))
+        const confFile = alternativeConfigFileNames
+            .find(fullFileName => fs.existsSync(fullFileName))
 
         if (!confFile) {
             throw new ReferenceError('conf file not found')
