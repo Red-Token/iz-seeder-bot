@@ -2,11 +2,11 @@ import {BotConfig} from './config.js'
 import {nip19} from 'nostr-tools'
 import {SignerData, SignerType} from 'iz-nostrlib/ses'
 import {
-    asyncCreateWelshmanSession,
-    CommunityNostrContext,
-    GlobalNostrContext,
-    Identifier,
-    Identity
+	asyncCreateWelshmanSession,
+	CommunityNostrContext,
+	GlobalNostrContext,
+	Identifier,
+	Identity
 } from 'iz-nostrlib/communities'
 import {Nip9999SeederTorrentTransformationRequestEvent, NostrCommunityServiceBot} from 'iz-nostrlib/seederbot'
 import {EventType} from 'iz-nostrlib'
@@ -25,8 +25,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 if (botSeckey.type !== 'nsec') throw Error('')
 
 setContext({
-    net: getDefaultNetContext(),
-    app: getDefaultAppContext()
+	net: getDefaultNetContext(),
+	app: getDefaultAppContext()
 })
 
 const globalNostrContext = new GlobalNostrContext(botConfig.globalRelay)
@@ -79,6 +79,6 @@ await tb.loadTorrents()
 
 // The event handler
 nostrCommunityServiceBot.session.eventStream.emitter.on(EventType.DISCOVERED, async (event: TrustedEvent) => {
-    const ne = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
-    await tb.transcode(ne, new RequestStateProgressTracker(event.id, nostrCommunityServiceBot.publisher))
+	const ne = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
+	await tb.transcode(ne, new RequestStateProgressTracker(event.id, nostrCommunityServiceBot.publisher))
 })

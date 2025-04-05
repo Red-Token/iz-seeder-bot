@@ -27,6 +27,8 @@ if ! command -v docker &>/dev/null; then
 
 fi
 
+chmod -R 0777 /tmp/iz-seeder-bot
+
 echo "Starting bot..."
 
 docker stop iz-seeder-bot

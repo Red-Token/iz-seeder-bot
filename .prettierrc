@@ -2,9 +2,12 @@
     "semi": false,
     "parser": "typescript",
     "singleQuote": true,
+    "useTabs": true,
     "tabWidth": 4,
     "bracketSpacing": false,
     "trailingComma": "none",
     "endOfLine": "lf",
-    "printWidth": 120
+    "printWidth": 120,
+    "bracketSameLine": false,
+    "quoteProps": "as-needed"
 }

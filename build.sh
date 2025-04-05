@@ -41,7 +41,7 @@ if [ -z "$VERSION" ]; then
 fi
 
 # Set your Docker Hub username
-DOCKERHUB_USERNAME="ivnjey"     
+DOCKERHUB_USERNAME="ivnjey"
 
 # Set environment variables
 export VERSION=$VERSION

@@ -1,13 +1,11 @@
-FROM node:22
-RUN apt update && apt install -y --no-install-recommends ffmpeg gpac &&
-    rm -rf /var/lib/apt/lists/*
+FROM node:23-bullseye
+WORKDIR /app
 
-COPY package.json package-lock.json* ./
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg gpac && rm -rf /var/lib/apt/lists/*
 
-RUN npm i --omit=dev
-RUN mkdir -p /tmp/iz-seeder-bot/{seeding, transcoding, upload}
-RUN mkdir -p /var/tmp/iz-seeder-bot/seeding
-COPY ./dist /dist
+COPY package.json package-lock.json* manifest_updated.mpd manifest_updated.mpd.xml .
+COPY ./dist ./dist
 
-CMD ["node", "--require", "./dist/preload.cjs", "/dist/index.js"]
-#CMD ["npm", "run", "serve"]
+RUN npm i --omit=dev && mkdir -p /tmp/iz-seeder-bot/upload && mkdir -p /var/tmp/iz-seeder-bot/seeding
+
+CMD ["node", "--require", "./dist/preload.cjs", "dist/index.js"]
