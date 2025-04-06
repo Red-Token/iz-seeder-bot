@@ -6,6 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg gpac && 
 COPY package.json package-lock.json* manifest_updated.mpd manifest_updated.mpd.xml .
 COPY ./dist ./dist
 
-RUN npm i --omit=dev && mkdir -p /tmp/iz-seeder-bot/upload && mkdir -p /var/tmp/iz-seeder-bot/seeding
+RUN npm i --omit=dev
 
 CMD ["node", "--require", "./dist/preload.cjs", "dist/index.js"]

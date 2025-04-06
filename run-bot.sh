@@ -27,7 +27,7 @@ if ! command -v docker &>/dev/null; then
 
 fi
 
-chmod -R 0777 /tmp/iz-seeder-bot
+# chmod -R 0777 /tmp/iz-seeder-bot
 
 echo "Starting bot..."
 
@@ -37,6 +37,4 @@ docker compose -f docker-compose-bot.yaml down
 
 docker system prune -a -f
 
-# docker compose up -d
-docker compose -f docker-compose-bot.yaml up --pull always -d --force-recreate
-# docker compose -f docker-compose-bot.yaml up -d  --force-recreate
+docker compose -f docker-compose-bot.yaml up -d --force-recreate

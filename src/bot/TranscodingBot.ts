@@ -134,6 +134,7 @@ export class TranscodingBot extends SeedingBot {
 			const transcodingPath = path.join(tempAssetPath, 'transcoding')
 			const dashingPath = path.join(tempAssetPath, 'dashing')
 			const seedingPath = path.join(this.botConfig.seedingDir, uuid)
+
 			const directories: string[] = [tempAssetPath, torrentPath, transcodingPath, dashingPath]
 			directories.forEach((path) => mkdirSync(path, {recursive: true}))
 

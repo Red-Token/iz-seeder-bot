@@ -1,9 +1,10 @@
 services:
   iz-seeder-bot:
-    image: ivnjey/iz-seeder-bot:0.0.1
+    image: ivnjey/iz-seeder-bot:latest
     container_name: iz-seeder-bot
+    pull_policy: always
     volumes:
       - ./config.json:/app/config.json
-      - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
-      - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
+      # - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
+      # - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
     restart: unless-stopped

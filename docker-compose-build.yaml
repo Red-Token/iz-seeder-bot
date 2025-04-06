@@ -1,10 +1,10 @@
 services:
   iz-seeder-bot:
     build: .
-    image: ivnjey/iz-seeder-bot:${VERSION}
+    image: ${DOCKER_NAME}:${VERSION}
     container_name: iz-seeder-bot
     volumes:
       - ./config.json:/app/config.json
-      - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
-      - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
+      # - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
+      # - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
     restart: unless-stopped
