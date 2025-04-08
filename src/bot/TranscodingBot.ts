@@ -7,6 +7,7 @@ import WebTorrent, {Torrent, TorrentOptions} from 'webtorrent'
 import {Language, SubtitleConverter} from '../util/SubtitleConverter.js'
 import {searchAndDownloadSubtitles} from '../api/opensubtitles/SubtitleDownloader.js'
 import fs from 'node:fs'
+import fsextra from 'fs-extra'
 import {Formats, VideoConverter} from '../util/VideoConverter.js'
 import EventEmitter from 'node:events'
 import {Dasher} from '../util/Dasher.js'
@@ -162,7 +163,6 @@ export class TranscodingBot extends SeedingBot {
 				sumBytes += bytes
 
 				if (torrent.done || now - lastReport < this.rateLimit) return
-
 				console.log(`download torrent ${bytes} ${torrent.progress * 100}`)
 				rspt.update({
 					progress: torrent.progress * 100,
@@ -265,13 +265,16 @@ export class TranscodingBot extends SeedingBot {
 			{
 				rspt.update({state: 'seeding', seq: 6, progress: 0, message: `Seeding the asset`})
 
-				fs.rename(dashingPath, seedingPath, (err) => {
-					if (err === undefined || err === null) return
-
-					console.error(err)
-				})
-
 				mkdirSync(seedingPath, {recursive: true})
+				console.log('test1')
+				// fs.rename(dashingPath, seedingPath, (err) => {
+				// 	if (err === undefined || err === null) return
+
+				// 	console.error(err)
+				// })
+
+				fsextra.moveSync(dashingPath, seedingPath, {overwrite: true})
+				console.log('test2')
 				// const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
 				const files = fs.readdirSync(seedingPath).map((fileName) => path.join(seedingPath, fileName))
 				const outTorrent = this.wt.seed(files, options)

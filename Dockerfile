@@ -6,6 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg gpac && 
 COPY package.json package-lock.json* manifest_updated.mpd manifest_updated.mpd.xml .
 COPY ./dist ./dist
 
-RUN npm i --omit=dev
+RUN npm i -g pm2 && npm i --omit=dev
 
-CMD ["node", "--require", "./dist/preload.cjs", "dist/index.js"]
+CMD ["pm2-runtime", "dist/index.js", "--name", "iz-seeder-bot"]

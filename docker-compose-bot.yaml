@@ -5,6 +5,6 @@ services:
     pull_policy: always
     volumes:
       - ./config.json:/app/config.json
-      # - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
-      # - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
+      - /tmp/iz-seeder-bot:/tmp/iz-seeder-bot
+      - /var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
     restart: unless-stopped
