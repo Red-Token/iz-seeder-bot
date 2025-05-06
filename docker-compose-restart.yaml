@@ -1,0 +1,13 @@
+services:
+  iz-seeder-bot:
+    image: iz-seeder-bot:0.0.1
+    container_name: iz-seeder-bot
+    extra_hosts:
+      - "relay.lxc:host-gateway"
+      - "relay.bf.lxc:host-gateway"
+    volumes:
+      - ./config.json:/app/config.json
+      - ./dist:/app/dist
+      - ./tmp/iz-seeder-bot:/tmp/iz-seeder-bot
+      - ./var/tmp/iz-seeder-bot:/var/tmp/iz-seeder-bot
+    restart: unless-stopped
