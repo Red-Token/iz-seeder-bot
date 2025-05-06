@@ -1,0 +1,37 @@
+diff --git a/node_modules/@red-token/welshman/build/src/lib/Tools.js b/node_modules/@red-token/welshman/build/src/lib/Tools.js
+index daf8fa8..63f106f 100755
+--- a/node_modules/@red-token/welshman/build/src/lib/Tools.js
++++ b/node_modules/@red-token/welshman/build/src/lib/Tools.js
+@@ -365,18 +365,30 @@ export const parseJson = (json) => {
+         return undefined;
+     }
+ };
++
++// Lazily access localStorage
++const getLocalStorage = () => globalThis.localStorage;
++
+ /**
+  * Gets and parses JSON from localStorage
+  * @param k - Storage key
+  * @returns Parsed value or undefined if invalid/missing
+  */
+-export const getJson = (k) => parseJson(localStorage.getItem(k) || "");
++export const getJson = (k) => {
++    const storage = getLocalStorage();
++    return storage ? parseJson(storage.getItem(k) || "") : undefined;
++};
++
+ /**
+  * Stringifies and stores value in localStorage
+  * @param k - Storage key
+  * @param v - Value to store
+  */
+-export const setJson = (k, v) => localStorage.setItem(k, JSON.stringify(v));
++export const setJson = (k, v) => {
++    const storage = getLocalStorage();
++    storage?.setItem(k, JSON.stringify(v));
++};
++
+ /**
+  * Safely executes function and handles errors
+  * @param f - Function to execute
