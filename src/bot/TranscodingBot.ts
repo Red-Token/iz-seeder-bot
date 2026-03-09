@@ -65,30 +65,33 @@ export class CombinedProgressReporter extends ProgressReporter {
     }
 }
 
-const defaultTorrentOptions: TorrentOptions = {
-    announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
-    maxWebConns: 500
-}
-
 export class SeedingBot {
+    protected readonly defaultTorrentOptions: TorrentOptions
+
     constructor(
         protected botConfig: BotConfig,
         protected wt: WebTorrent.Instance
     ) {
         mkdirSync(this.botConfig.seedingDir, {recursive: true})
+        this.defaultTorrentOptions = {
+            announce: this.botConfig.trackerAnnounce,
+            maxWebConns: 500
+        }
     }
 
     async loadTorrents() {
+        console.info('[seeder-bot] loadTorrents scanning', {seedingDir: this.botConfig.seedingDir})
+
         for (const filename of fs.readdirSync(this.botConfig.seedingDir)) {
-            console.log(`Loading: ${filename}`)
+            console.info('[seeder-bot] loading existing seeding directory', {filename})
 
             try {
                 const torrentDir = path.join(this.botConfig.seedingDir, filename)
                 const hash = await this.loadTorrent(torrentDir)
 
-                console.log(`Started seeding: ${filename} as ${hash}`)
+                console.info('[seeder-bot] existing torrent loaded', {filename, hash})
             } catch (e) {
-                console.error(e)
+                console.error('[seeder-bot] failed to load existing torrent', {filename, error: e})
             }
         }
     }
@@ -99,7 +102,7 @@ export class SeedingBot {
             throw new Error('Empty torrentdir: ' + torrentDir)
         }
 
-        const t = this.wt.seed(torrentDir, {...defaultTorrentOptions, ...options})
+        const t = this.wt.seed(torrentDir, {...this.defaultTorrentOptions, ...options})
 
         return waitForInfoHash(t)
     }
@@ -108,15 +111,52 @@ export class SeedingBot {
 export class TranscodingBot extends SeedingBot {
     rateLimit = 1000
     lastReport = 0
+    transcodingTimeoutMs = Number(process.env.BOT_TRANSCODING_TIMEOUT_MS ?? '120000')
+    dashingTimeoutMs = Number(process.env.BOT_DASHING_TIMEOUT_MS ?? '120000')
+
+    private async withStageTimeout<T>(stage: string, timeoutMs: number, fn: () => Promise<T>): Promise<T> {
+        return await new Promise<T>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error(`${stage} timed out after ${timeoutMs}ms`))
+            }, timeoutMs)
+
+            fn()
+                .then((result) => {
+                    clearTimeout(timer)
+                    resolve(result)
+                })
+                .catch((error) => {
+                    clearTimeout(timer)
+                    reject(error)
+                })
+        })
+    }
+
+    private async moveDirectory(src: string, dest: string): Promise<void> {
+        try {
+            await fs.promises.rename(src, dest)
+            return
+        } catch (error) {
+            const err = error as NodeJS.ErrnoException
+            if (err.code !== 'EXDEV') {
+                throw error
+            }
+        }
+
+        await fs.promises.cp(src, dest, {recursive: true, force: true})
+        await fs.promises.rm(src, {recursive: true, force: true})
+    }
 
     async transcode(req: Nip9999SeederTorrentTransformationRequestEvent, rspt: RequestStateProgressTracker) {
         try {
             const reqConfig: TranscodingRequest = req.content
-            console.warn(JSON.stringify(reqConfig))
-
-            // type RequestState = {
-            //     state: string, msg: string, progress?: number, final?: boolean
-            // }
+            console.info('[seeder-bot] transcode request start', {
+                requestEventId: req.event?.id,
+                title: req.title,
+                torrentHash: req.x,
+                file: reqConfig.file,
+                formats: Object.keys(reqConfig.formats)
+            })
 
             rspt.requestState = {
                 seq: 0,
@@ -139,24 +179,18 @@ export class TranscodingBot extends SeedingBot {
             mkdirSync(dashingPath, {recursive: true})
             mkdirSync(transcodingPath, {recursive: true})
 
-            const options: TorrentOptions = {
-                announce: [
-                    'wss://tracker.webtorrent.dev',
-                    'wss://tracker.btorrent.xyz',
-                    'wss://tracker.openwebtorrent.com'
-                ],
-                maxWebConns: 500,
-                path: torrentPath
-            }
+            const options: TorrentOptions = {...this.defaultTorrentOptions, ...{path: torrentPath}}
 
-            rspt.update({state: 'prepared', seq: 1, progress: 100, message: `Download is prepared`})
+            rspt.update({state: 'prepared', seq: 1, progress: 100, message: 'Download is prepared'})
+            console.info('[seeder-bot] download prepared', {requestEventId: req.event?.id, torrentPath})
 
             const torrent: Torrent = this.wt.add(req.x, options)
 
             let lastReport = 0
             let sumBytes: number = 0
 
-            rspt.update({state: 'downloading', seq: 2, progress: 0, message: `Starting to download`})
+            rspt.update({state: 'downloading', seq: 2, progress: 0, message: 'Starting to download'})
+            console.info('[seeder-bot] download started', {requestEventId: req.event?.id})
 
             torrent.on('download', (bytes: number) => {
                 const now = new Date().getTime()
@@ -164,7 +198,12 @@ export class TranscodingBot extends SeedingBot {
 
                 if (torrent.done || now - lastReport < this.rateLimit) return
 
-                console.log(`download torrent ${bytes} ${torrent.progress * 100}`)
+                console.info('[seeder-bot] download progress', {
+                    requestEventId: req.event?.id,
+                    bytes,
+                    accumulated: sumBytes,
+                    progressPct: torrent.progress * 100
+                })
                 rspt.update({
                     progress: torrent.progress * 100,
                     message: `Downloading torrent ${torrent.progress} done`
@@ -175,8 +214,9 @@ export class TranscodingBot extends SeedingBot {
             })
 
             await this.waitForDone(torrent)
+            console.info('[seeder-bot] download finished', {requestEventId: req.event?.id, infoHash: torrent.infoHash})
 
-            rspt.update({progress: 100, message: `The torrent has been downloaded`})
+            rspt.update({progress: 100, message: 'The torrent has been downloaded'})
 
             this.wt.remove(torrent.infoHash)
 
@@ -185,7 +225,11 @@ export class TranscodingBot extends SeedingBot {
 
             // Download subtitles
             if (reqConfig.subtitles) {
-                rspt.update({state: 'subtitles', seq: 3, progress: 0, message: `Processing subtitles`})
+                rspt.update({state: 'subtitles', seq: 3, progress: 0, message: 'Processing subtitles'})
+                console.info('[seeder-bot] subtitle processing started', {
+                    requestEventId: req.event?.id,
+                    subtitleCount: reqConfig.subtitles.length
+                })
 
                 const fraq = 100 / reqConfig.subtitles.length
                 for (const [i, subtitle] of reqConfig.subtitles.entries()) {
@@ -211,7 +255,6 @@ export class TranscodingBot extends SeedingBot {
                     // Convert the subtitle
                     const outputFile = path.join(transcodingPath, `subtitles_${subtitle.lang.short}.mp4`)
                     subtitles.push(outputFile)
-                    // TODO convert this
                     await sconv.convert(subtitleFile, outputFile, subtitle.lang)
 
                     rspt.update({
@@ -220,16 +263,24 @@ export class TranscodingBot extends SeedingBot {
                     })
                 }
                 rspt.update({progress: 100, message: 'Subtitles processed'})
+                console.info('[seeder-bot] subtitle processing finished', {requestEventId: req.event?.id})
             }
 
             // Transcode
             {
-                rspt.update({state: 'transcoding', seq: 4, progress: 0, message: `Transcoding the asset`})
+                rspt.update({state: 'transcoding', seq: 4, progress: 0, message: 'Transcoding the asset'})
                 this.lastReport = 0
 
                 const converter = new VideoConverter()
                 const inputFile = path.join(torrentPath, reqConfig.file)
                 const cpr = new CombinedProgressReporter()
+
+                console.info('[seeder-bot] transcoding started', {
+                    requestEventId: req.event?.id,
+                    inputFile,
+                    formats: Object.keys(reqConfig.formats),
+                    timeoutMs: this.transcodingTimeoutMs
+                })
 
                 cpr.on('progress', () => {
                     const now = new Date().getTime()
@@ -239,47 +290,66 @@ export class TranscodingBot extends SeedingBot {
                     rspt.update({progress: cpr.progress})
                 })
 
-                // we execute all of these in parallel
-                await Promise.all(
-                    Object.entries(reqConfig.formats).map((val) => {
-                        const reporter = new ProgressReporter()
-                        cpr.add(reporter)
-                        const outputFile = path.join(transcodingPath, `video_${val[0]}.mp4`)
-                        videos.push(outputFile)
-                        return converter.convert(inputFile, outputFile, val[1], reporter)
-                    })
-                )
+                await this.withStageTimeout('transcoding', this.transcodingTimeoutMs, async () => {
+                    await Promise.all(
+                        Object.entries(reqConfig.formats).map((val) => {
+                            const reporter = new ProgressReporter()
+                            cpr.add(reporter)
+                            const outputFile = path.join(transcodingPath, `video_${val[0]}.mp4`)
+                            videos.push(outputFile)
+                            return converter.convert(inputFile, outputFile, val[1], reporter)
+                        })
+                    )
+                })
+
+                console.info('[seeder-bot] transcoding finished', {
+                    requestEventId: req.event?.id,
+                    outputs: videos
+                })
             }
 
             // Dash
             {
-                rspt.update({state: 'dashing', seq: 5, progress: 0, message: `Dashing the asset`})
+                rspt.update({state: 'dashing', seq: 5, progress: 0, message: 'Dashing the asset'})
+                console.info('[seeder-bot] dashing started', {
+                    requestEventId: req.event?.id,
+                    timeoutMs: this.dashingTimeoutMs
+                })
 
                 const dasher = new Dasher()
                 const mpdFile = path.join(dashingPath, 'manifest.mpd')
-                await dasher.dash(videos, mpdFile, subtitles)
+                await this.withStageTimeout('dashing', this.dashingTimeoutMs, async () => {
+                    await dasher.dash(videos, mpdFile, subtitles)
+                })
                 patchMpd(mpdFile)
 
-                rspt.update({progress: 100, message: `Dashing is done`})
+                rspt.update({progress: 100, message: 'Dashing is done'})
+                console.info('[seeder-bot] dashing finished', {
+                    requestEventId: req.event?.id,
+                    mpdFile
+                })
             }
 
             {
-                rspt.update({state: 'seeding', seq: 6, progress: 0, message: `Seeding the asset`})
-
-                fs.rename(dashingPath, seedingPath, (err) => {
-                    if (err === undefined || err === null) return
-
-                    console.error(err)
+                rspt.update({state: 'seeding', seq: 6, progress: 0, message: 'Seeding the asset'})
+                console.info('[seeder-bot] seeding started', {
+                    requestEventId: req.event?.id,
+                    seedingPath
                 })
 
-                mkdirSync(seedingPath, {recursive: true})
-                // const outTorrent = wt.seed(assetDir, {...options, ...{name: req.title}})
-                const files = fs.readdirSync(seedingPath).map((fileName) => path.join(seedingPath, fileName))
-                const outTorrent = this.wt.seed(files, options)
+                await this.moveDirectory(dashingPath, seedingPath)
+                console.info('[seeder-bot] dashing output moved to seeding path', {
+                    requestEventId: req.event?.id,
+                    seedingPath
+                })
 
-                rspt.update({progress: 10, message: `Asset moved, waiting for infoHash`})
+                rspt.update({progress: 10, message: 'Asset moved, waiting for infoHash'})
 
-                const hash = await waitForInfoHash(outTorrent)
+                const hash = await this.loadTorrent(seedingPath, options)
+                console.info('[seeder-bot] seeding hash ready', {
+                    requestEventId: req.event?.id,
+                    hash
+                })
 
                 rspt.update(
                     {
@@ -287,19 +357,14 @@ export class TranscodingBot extends SeedingBot {
                         final: true,
                         message: `Transcoding has been done, starting to seed at ${hash}`
                     },
-                    [['x', outTorrent.infoHash]]
+                    [['x', hash]]
                 )
-
-                outTorrent.on('error', (error) => {
-                    console.error(error)
-                })
-
-                outTorrent.on('warning', (warning) => {
-                    console.warn(warning)
-                })
             }
         } catch (e) {
-            console.error(e)
+            console.error('[seeder-bot] transcode failed', {
+                requestEventId: req.event?.id,
+                error: e
+            })
             rspt.update({state: 'error', seq: -1, progress: 100, final: true, message: `Exited error: ${e}`})
         }
     }
