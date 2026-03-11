@@ -32,11 +32,35 @@ export class ProgressReport {
 }
 
 export class Dasher {
+    private buildDashInputs(videos: string[], subtitles?: string[]): string[] {
+        if (videos.length === 0) {
+            return subtitles ?? []
+        }
+
+        const [firstVideo, ...otherVideos] = videos
+        const inputs: string[] = []
+
+        // Force separate audio/video representations for DASH-AVC compatibility.
+        inputs.push(`${firstVideo}#audio:id=audio`)
+        inputs.push(`${firstVideo}#video:id=v0`)
+
+        otherVideos.forEach((video, index) => {
+            inputs.push(`${video}#video:id=v${index + 1}`)
+        })
+
+        if (subtitles?.length) {
+            inputs.push(...subtitles)
+        }
+
+        return inputs
+    }
+
     async dash(videos: string[], mpdFile: string, subtitles?: string[]): Promise<void> {
 
         const dash = 4000
         const frag = 4000
-        const profile = 'onDemand'
+        const profile = 'dashavc264:live'
+        const dashInputs = this.buildDashInputs(videos, subtitles)
 
         return new Promise((resolve, reject) => {
             const startedAt = Date.now()
@@ -47,28 +71,24 @@ export class Dasher {
                 .addOption('-profile', profile)
                 .addOption('-segment-timeline')
                 .addOption('-bs-switching', 'no')
+                .addOption('-segment-name', '$RepresentationID$_$Number%05d$')
                 .addOption('-out', mpdFile)
-                // .addOption('-encryption')
-                // .addOption('-crypt','/home/rene/git/iz-seeder-bot/test/data/clearkey.xml')
-                .addInputFiles(...videos)
-
-            if (subtitles?.length) {
-                process.addInputFiles(...subtitles)
-            }
+                .addInputFiles(...dashInputs)
 
             process
                 .on('start', (data: {command: string; args: string[]}) => {
                     console.info('[seeder-bot] gpac started', {
                         command: data.command,
-                        args: data.args
+                        args: data.args,
+                        dashInputs
                     })
                 })
                 .on('progress', (data) => {
                     const pr = new ProgressReport(data)
                     console.log(pr)
                 })
-                .on('info', (data) => {
-                    // console.log('info: ' + data)
+                .on('info', (_data) => {
+                    // no-op
                 })
                 .on('warning', (data) => {
                     console.warn(data)
@@ -88,7 +108,8 @@ export class Dasher {
                     console.error('[seeder-bot] gpac failed', {
                         mpdFile,
                         elapsedMs: Date.now() - startedAt,
-                        error: err?.message ?? String(err)
+                        error: err?.message ?? String(err),
+                        dashInputs
                     })
                     reject(err)
                 })

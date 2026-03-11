@@ -6,6 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "NODE_OPTIONS='--loader=ts-node/esm --require mock-local-storage' mocha 'test/**/*.test.ts'",
+    "test:transcode-assets": "NODE_OPTIONS='--loader=ts-node/esm --require mock-local-storage' mocha 'test/transcode-assets.test.ts'",
+    "test:transcode-assets:docker": "bash ./scripts/test-transcode-assets-docker.sh",
     "distformat": "npx prettier --write dist --ignore-path /dev/null",
     "start": "node --require mock-local-storage --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
     "build": "gts clean && node ./esbuild.config.js && npm run distformat",

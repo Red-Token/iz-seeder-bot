@@ -45,6 +45,17 @@ export type RequestStateUpdate = {
     final?: boolean,
 }
 
+export async function getTorrentHash(torrent: Torrent): Promise<string> {
+    return new Promise(resolve => {
+        if (torrent.infoHash !== undefined) resolve(torrent.infoHash)
+
+        torrent.on('infoHash', () => {
+            resolve(torrent.infoHash)
+        })
+    })
+}
+
+
 
 export class RequestStateProgressTracker {
     private _requestState: RequestState = {state: '', seq: 0, message: '', total: 0, final: false, progress: 0}

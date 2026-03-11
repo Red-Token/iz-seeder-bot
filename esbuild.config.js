@@ -9,7 +9,7 @@ await esbuild
         format: 'esm',
         outdir: 'dist',
         sourcemap: false,
-        external: ['webtorrent', 'fluent-ffmpeg', 'simple-peer', '@red-token/welshman'],
+        external: ['webtorrent', 'fluent-ffmpeg', 'simple-peer', '@red-token/welshman', 'create-torrent'],
         minify: false
     })
     .then(console.log('index.js built successfully.'))

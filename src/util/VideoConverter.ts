@@ -52,6 +52,9 @@ export class VideoConverter {
             ffmpeg(input)
                 // Video
                 .addOption('-c:v', `${this.videoCodec}`)
+                .addOption('-pix_fmt', 'yuv420p')
+                .addOption('-profile:v', 'baseline')
+                .addOption('-level', '3.1')
 
                 // CRF (Constant Rate Factor) this removed the set bitrate ie -b:v
                 .addOption('-crf', '23')
@@ -99,6 +102,8 @@ export class VideoConverter {
                 // Audio
                 .addOption('-c:a', `${this.audioCodec}`)
                 .addOption('-b:a', `${this.audioBitrate}`)
+                .addOption('-ac', '2')
+                .addOption('-ar', '48000')
 
                 // Options for creating the file
                 .addOption('-movflags', '+faststart')
@@ -130,6 +135,9 @@ export class VideoConverter {
             ffmpeg(input)
                 // Video
                 .addOption('-c:v', `${this.videoCodec}`)
+                .addOption('-pix_fmt', 'yuv420p')
+                .addOption('-profile:v', 'baseline')
+                .addOption('-level', '3.1')
 
                 // CRF (Constant Rate Factor) this removed the set bitrate ie -b:v
                 .addOption('-crf', '23')
@@ -147,6 +155,8 @@ export class VideoConverter {
                 // Audio
                 .addOption('-c:a', `${this.audioCodec}`)
                 .addOption('-b:a', `${this.audioBitrate}`)
+                .addOption('-ac', '2')
+                .addOption('-ar', '48000')
 
                 // Options for creating the file
                 .addOption('-movflags', '+faststart')

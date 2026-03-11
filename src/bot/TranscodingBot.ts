@@ -147,6 +147,58 @@ export class TranscodingBot extends SeedingBot {
         await fs.promises.rm(src, {recursive: true, force: true})
     }
 
+    private async createTorrentFileFromPath(seedingPath: string): Promise<Buffer> {
+        const createTorrentModule = await import('create-torrent')
+        const createTorrentFn = (createTorrentModule.default ?? createTorrentModule) as (
+            input: string,
+            options: {announce?: string[]},
+            cb: (error: Error | null, torrent: Uint8Array | Buffer) => void
+        ) => void
+
+        return await new Promise((resolve, reject) => {
+            createTorrentFn(
+                seedingPath,
+                {announce: this.botConfig.trackerAnnounce},
+                (error: Error | null, torrent: Uint8Array | Buffer) => {
+                    if (error) {
+                        reject(error)
+                        return
+                    }
+                    resolve(Buffer.from(torrent))
+                }
+            )
+        })
+    }
+
+    private async saveTorrentFile(hash: string, seedingPath: string): Promise<void> {
+        const timeoutMs = 10_000
+        const intervalMs = 250
+        const startedAt = Date.now()
+        let torrent = this.wt.get(hash)
+
+        while (torrent && !torrent.torrentFile && Date.now() - startedAt < timeoutMs) {
+            await new Promise(resolve => setTimeout(resolve, intervalMs))
+            torrent = this.wt.get(hash)
+        }
+
+        await fs.promises.mkdir(this.botConfig.torrentMetaDir, {recursive: true})
+        const outputFile = path.join(this.botConfig.torrentMetaDir, `${hash}.torrent`)
+        if (torrent?.torrentFile) {
+            await fs.promises.writeFile(outputFile, torrent.torrentFile)
+            console.info('[seeder-bot] torrent file exported from webtorrent metadata', {hash, outputFile})
+            return
+        }
+
+        console.warn('[seeder-bot] torrent metadata not available for .torrent export, using create-torrent fallback', {
+            hash,
+            timeoutMs,
+            seedingPath
+        })
+        const torrentFile = await this.createTorrentFileFromPath(seedingPath)
+        await fs.promises.writeFile(outputFile, torrentFile)
+        console.info('[seeder-bot] torrent file exported from filesystem fallback', {hash, outputFile})
+    }
+
     async transcode(req: Nip9999SeederTorrentTransformationRequestEvent, rspt: RequestStateProgressTracker) {
         try {
             const reqConfig: TranscodingRequest = req.content
@@ -191,6 +243,56 @@ export class TranscodingBot extends SeedingBot {
 
             rspt.update({state: 'downloading', seq: 2, progress: 0, message: 'Starting to download'})
             console.info('[seeder-bot] download started', {requestEventId: req.event?.id})
+
+            torrent.on('infoHash', () => {
+                console.info('[seeder-bot] torrent infoHash resolved', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash
+                })
+            })
+
+            torrent.on('metadata', () => {
+                console.info('[seeder-bot] torrent metadata received', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash,
+                    fileCount: torrent.files.length,
+                    files: torrent.files.map(file => file.name)
+                })
+            })
+
+            torrent.on('wire', (_wire: unknown, addr: string) => {
+                console.info('[seeder-bot] peer wire connected', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash,
+                    addr,
+                    numPeers: torrent.numPeers
+                })
+            })
+
+            torrent.on('noPeers', (announceType: string) => {
+                console.warn('[seeder-bot] no peers available', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash,
+                    announceType,
+                    numPeers: torrent.numPeers
+                })
+            })
+
+            torrent.on('warning', (warning: unknown) => {
+                console.warn('[seeder-bot] torrent warning', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash,
+                    warning
+                })
+            })
+
+            torrent.on('error', (error: unknown) => {
+                console.error('[seeder-bot] torrent error event', {
+                    requestEventId: req.event?.id,
+                    infoHash: torrent.infoHash,
+                    error
+                })
+            })
 
             torrent.on('download', (bytes: number) => {
                 const now = new Date().getTime()
@@ -350,6 +452,7 @@ export class TranscodingBot extends SeedingBot {
                     requestEventId: req.event?.id,
                     hash
                 })
+                await this.saveTorrentFile(hash, seedingPath)
 
                 rspt.update(
                     {

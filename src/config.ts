@@ -11,6 +11,7 @@ export class BotConfig {
     public readonly uploadDir: string
     public readonly transcodingDir: string
     public readonly seedingDir: string
+    public readonly torrentMetaDir: string
     public readonly globalRelay: string[]
     public readonly trackerAnnounce: string[]
 
@@ -96,5 +97,7 @@ export class BotConfig {
         this.transcodingDir =
             typeof parsed.transcodingDir === 'string' ? parsed.transcodingDir : '/tmp/iz-seeder-bot/transcoding'
         this.seedingDir = typeof parsed.seedingDir === 'string' ? parsed.seedingDir : '/var/tmp/iz-seeder-bot/seeding'
+        this.torrentMetaDir =
+            typeof parsed.torrentMetaDir === 'string' ? parsed.torrentMetaDir : '/var/tmp/iz-seeder-bot/torrents'
     }
 }

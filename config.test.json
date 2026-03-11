@@ -12,9 +12,9 @@
   "comRelay": [
     "wss://relay.bf.lxc"
   ],
-  "uploadDir": "/tmp/iz-seeder-bot/upload",
-  "transcodingDir": "/tmp/iz-seeder-bot/transcoding",
-  "seedingDir": "/var/tmp/iz-seeder-bot/seeding"
+  "uploadDir": "/tmp/test/iz-seeder-bot/upload",
+  "transcodingDir": "/tmp/test/iz-seeder-bot/transcoding",
+  "seedingDir": "/var/tmp/test/iz-seeder-bot/seeding"
 }
 
 

@@ -12,3 +12,4 @@ tmp
 var
 /config.devel.json
 /config.json
+/test/data/crypt/

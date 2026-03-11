@@ -25,7 +25,8 @@ try {
         communityPubkey: botConfig.communityPubkey,
         uploadDir: botConfig.uploadDir,
         transcodingDir: botConfig.transcodingDir,
-        seedingDir: botConfig.seedingDir
+        seedingDir: botConfig.seedingDir,
+        torrentMetaDir: botConfig.torrentMetaDir
     })
 
     setContext({
