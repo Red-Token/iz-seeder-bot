@@ -1,0 +1,7 @@
+<GPACDRM type="CENC AES-CTR">
+    <DRMInfo type="pssh" version="1">
+        <BS ID128=" 1077efec-c0b2-4d02-ace3-3c1e52e2fb4b"/> <!-- System ID (CENC) -->
+        <BS ID128="abcdefababcdefababcdefababcdefab"/> <!-- KID -->
+        <BS bits="32" value="12345678123456781234567812345678"/> <!-- Key -->
+    </DRMInfo>
+</GPACDRM>

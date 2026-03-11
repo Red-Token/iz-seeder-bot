@@ -1,0 +1,15 @@
+.idea
+
+/node_modules/
+/dist
+
+/test/data/bbb/orig/
+.hide
+tsconfig.mjs.tsbuildinfo
+.npmrc
+localstorage
+tmp
+var
+/config.devel.json
+/config.json
+/test/data/crypt/
