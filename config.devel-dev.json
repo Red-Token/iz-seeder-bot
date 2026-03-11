@@ -13,6 +13,7 @@
   ],
   "uploadDir": "/tmp/iz-seeder-bot/upload",
   "transcodingDir": "/tmp/iz-seeder-bot/transcoding",
-  "seedingDir": "/var/tmp/iz-seeder-bot/seeding",
-  "torrentMetaDir": "/var/tmp/iz-seeder-bot/torrents"
+  "seedingDir": "/var/tmp/iz-seeder-bot/seeding"
 }
+
+

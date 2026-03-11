@@ -1,21 +1,22 @@
 import fs, {readFileSync} from 'node:fs'
 import {normalizeRelayUrl} from '@red-token/welshman/util'
-import {fileURLToPath} from 'node:url'
-import path from 'node:path'
+import {NostrUserProfileMetaData} from 'iz-nostrlib/nip01'
 
 export class BotConfig {
     public readonly nsec: string
     public readonly communityPubkey: string
     public readonly comRelay: string[]
+    public readonly profile: NostrUserProfileMetaData
     public readonly botDir: string
     public readonly uploadDir: string
     public readonly transcodingDir: string
     public readonly seedingDir: string
+    public readonly torrentMetaDir: string
     public readonly globalRelay: string[]
+    public readonly trackerAnnounce: string[]
 
-    constructor() {
-
-        const alternativeConfigFileNames = ['config.devel.json', 'config.json', 'config.default.json']
+    constructor(alternativeConfigFileNames = ['config.devel.json', 'config.json', 'config.default.json']) {
+        // const alternativeConfigFileNames = ['config.devel.json', 'config.json', 'config.default.json']
 
         const confFile = alternativeConfigFileNames
             .find(fullFileName => fs.existsSync(fullFileName))
@@ -69,10 +70,34 @@ export class BotConfig {
             throw new Error('comRelay must be a string or an array of strings')
         }
 
+        if (Array.isArray(parsed.trackerAnnounce)) {
+            if (parsed.trackerAnnounce.length === 0) {
+                throw new Error('trackerAnnounce array must not be empty')
+            }
+            this.trackerAnnounce = parsed.trackerAnnounce.map((announce: unknown) => {
+                if (typeof announce !== 'string') {
+                    throw new Error('Each trackerAnnounce element must be a string')
+                }
+                return announce
+            })
+        } else if (typeof parsed.trackerAnnounce === 'string') {
+            this.trackerAnnounce = [parsed.trackerAnnounce]
+        } else {
+            this.trackerAnnounce = [
+                'wss://tracker.webtorrent.dev',
+                'wss://tracker.btorrent.xyz',
+                'wss://tracker.openwebtorrent.com'
+            ]
+        }
+
+        this.profile = parsed.profile
+
         this.botDir = typeof parsed.botDir === 'string' ? parsed.botDir : '/tmp/iz-seeder-bot'
         this.uploadDir = typeof parsed.uploadDir === 'string' ? parsed.uploadDir : '/tmp/iz-seeder-bot/upload'
         this.transcodingDir =
             typeof parsed.transcodingDir === 'string' ? parsed.transcodingDir : '/tmp/iz-seeder-bot/transcoding'
         this.seedingDir = typeof parsed.seedingDir === 'string' ? parsed.seedingDir : '/var/tmp/iz-seeder-bot/seeding'
+        this.torrentMetaDir =
+            typeof parsed.torrentMetaDir === 'string' ? parsed.torrentMetaDir : '/var/tmp/iz-seeder-bot/torrents'
     }
 }

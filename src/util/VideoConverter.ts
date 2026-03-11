@@ -40,9 +40,11 @@ export class VideoConverter {
     audioCodec = 'aac'
     audioBitrate = '128k'
 
-    constructor(private preset = 'ultrafast') {}
+    constructor(private preset = 'ultrafast') {
+    }
 
-    async convert(input: string, output: string, format: Format, reporter?: ProgressReporter) {
+
+    async convertVideo(input: string, output: string, format: Format, reporter?: ProgressReporter) {
         await new Promise<void>((resolve, reject) => {
             const scale = `${format.width}:${format.height}`
             const gop = 60
@@ -50,6 +52,92 @@ export class VideoConverter {
             ffmpeg(input)
                 // Video
                 .addOption('-c:v', `${this.videoCodec}`)
+                .addOption('-pix_fmt', 'yuv420p')
+                .addOption('-profile:v', 'baseline')
+                .addOption('-level', '3.1')
+
+                // CRF (Constant Rate Factor) this removed the set bitrate ie -b:v
+                .addOption('-crf', '23')
+                .addOption('-preset', this.preset)
+
+                // GOP (Group of Pictures) size
+                .addOption('-g', `${gop}`)
+                .addOption('-keyint_min', `${gop}`)
+
+                // Scene Change Threshold (disabled)
+                .addOption('-sc_threshold', '0')
+
+                .addOption(`-vf`, `scale=${scale}`)
+
+                // Audio
+                .addOption('-an')
+
+                // Options for creating the file
+                .addOption('-movflags', '+faststart')
+
+                .addOption('-y')
+                .output(output)
+                .on('start', (commandLine) => {
+                    console.log('FFmpeg command: ', commandLine)
+                })
+                .on('progress', (progress) => {
+                    console.log('progress: ', progress)
+                    if (reporter !== undefined) reporter.progress = progress.percent ?? 0
+                })
+                .on('error', (err) => reject(err))
+                .on('end', () => {
+                    if (reporter !== undefined) reporter.done()
+                    resolve()
+                })
+                .run()
+        })
+    }
+
+    async convertAudio(input: string, output: string, reporter?: ProgressReporter) {
+        await new Promise<void>((resolve, reject) => {
+            ffmpeg(input)
+                // Video
+                .addOption('-vn')
+
+                // Audio
+                .addOption('-c:a', `${this.audioCodec}`)
+                .addOption('-b:a', `${this.audioBitrate}`)
+                .addOption('-ac', '2')
+                .addOption('-ar', '48000')
+
+                // Options for creating the file
+                .addOption('-movflags', '+faststart')
+
+                .addOption('-y')
+                .output(output)
+                .on('start', (commandLine) => {
+                    console.log('FFmpeg command: ', commandLine)
+                })
+                .on('progress', (progress) => {
+                    console.log('progress: ', progress)
+                    if (reporter !== undefined) reporter.progress = progress.percent ?? 0
+                })
+                .on('error', (err) => reject(err))
+                .on('end', () => {
+                    if (reporter !== undefined) reporter.done()
+                    resolve()
+                })
+                .run()
+        })
+    }
+
+    async convert(input: string, output: string, format: Format, reporter?: ProgressReporter) {
+        await new Promise<void>((resolve, reject) => {
+            const scale = `${format.width}:${format.height}`
+            const gop = 60
+            const startedAt = Date.now()
+
+            ffmpeg(input)
+                // Video
+                .addOption('-c:v', `${this.videoCodec}`)
+                .addOption('-pix_fmt', 'yuv420p')
+                .addOption('-profile:v', 'baseline')
+                .addOption('-level', '3.1')
 
                 // CRF (Constant Rate Factor) this removed the set bitrate ie -b:v
                 .addOption('-crf', '23')
@@ -67,6 +155,8 @@ export class VideoConverter {
                 // Audio
                 .addOption('-c:a', `${this.audioCodec}`)
                 .addOption('-b:a', `${this.audioBitrate}`)
+                .addOption('-ac', '2')
+                .addOption('-ar', '48000')
 
                 // Options for creating the file
                 .addOption('-movflags', '+faststart')
@@ -74,14 +164,31 @@ export class VideoConverter {
                 .addOption('-y')
                 .output(output)
                 .on('start', (commandLine) => {
-                    console.log('FFmpeg command: ', commandLine)
+                    console.info('[seeder-bot] ffmpeg started', {
+                        input,
+                        output,
+                        scale,
+                        commandLine
+                    })
                 })
                 .on('progress', (progress) => {
-                    console.log('progress: ', progress)
                     if (reporter !== undefined) reporter.progress = progress.percent ?? 0
                 })
-                .on('error', (err) => reject(err))
+                .on('error', (err) => {
+                    console.error('[seeder-bot] ffmpeg failed', {
+                        input,
+                        output,
+                        elapsedMs: Date.now() - startedAt,
+                        error: err?.message ?? String(err)
+                    })
+                    reject(err)
+                })
                 .on('end', () => {
+                    console.info('[seeder-bot] ffmpeg finished', {
+                        input,
+                        output,
+                        elapsedMs: Date.now() - startedAt
+                    })
                     if (reporter !== undefined) reporter.done()
                     resolve()
                 })

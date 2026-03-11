@@ -1,84 +1,51 @@
 import {BotConfig} from './config.js'
-import {nip19} from 'nostr-tools'
-import {SignerData, SignerType} from 'iz-nostrlib/ses'
-import {
-    asyncCreateWelshmanSession,
-    CommunityNostrContext,
-    GlobalNostrContext,
-    Identifier,
-    Identity
-} from 'iz-nostrlib/communities'
-import {Nip9999SeederTorrentTransformationRequestEvent, NostrCommunityServiceBot} from 'iz-nostrlib/seederbot'
-import {EventType} from 'iz-nostrlib'
-import {TrustedEvent} from '@red-token/welshman/util'
-import {RequestStateProgressTracker, wait} from './util/util.js'
 import {setContext} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext} from '@red-token/welshman/app'
-import {wt} from './wt/IZWebTorrent.js'
-import {TranscodingBot} from './bot/TranscodingBot.js'
-
-const botConfig = new BotConfig()
-const botSeckey = nip19.decode(botConfig.nsec)
+import {TranscodingService} from './service/TranscodingService.js'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-if (botSeckey.type !== 'nsec') throw Error('')
+function log(message: string, data?: unknown) {
+    if (data === undefined) {
+        console.info(`[seeder-bot] ${message}`)
+        return
+    }
 
-setContext({
-    net: getDefaultNetContext(),
-    app: getDefaultAppContext()
-})
+    console.info(`[seeder-bot] ${message}`, data)
+}
 
-const globalNostrContext = new GlobalNostrContext(botConfig.globalRelay)
+try {
+    log('starting bot process')
 
-// Wait for the global context to load all the profiles
-await wait(2000)
+    const botConfig = new BotConfig()
+    log('config loaded', {
+        comRelay: botConfig.comRelay,
+        globalRelay: botConfig.globalRelay,
+        trackerAnnounce: botConfig.trackerAnnounce,
+        communityPubkey: botConfig.communityPubkey,
+        uploadDir: botConfig.uploadDir,
+        transcodingDir: botConfig.transcodingDir,
+        seedingDir: botConfig.seedingDir,
+        torrentMetaDir: botConfig.torrentMetaDir
+    })
 
-const botSignerData: SignerData = {type: SignerType.NIP01, nsec: botConfig.nsec}
-const botWs = await asyncCreateWelshmanSession(botSignerData)
-const botIdentifier = new Identifier(botWs)
-const botIdentity = new Identity(globalNostrContext, botIdentifier)
+    setContext({
+        net: getDefaultNetContext(),
+        app: getDefaultAppContext()
+    })
+    log('welshman context initialized')
 
-const botCommunityNosterContext = new CommunityNostrContext(botConfig.communityPubkey, globalNostrContext)
-const nostrCommunityServiceBot = new NostrCommunityServiceBot(botCommunityNosterContext, botIdentity)
+    const ts = await TranscodingService.create(botConfig)
+    log('transcoding service created')
 
-// const options: TorrentOptions = {
-//     announce: ['wss://tracker.webtorrent.dev', 'wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com'],
-//     maxWebConns: 500
-// }
+    await ts.register(botConfig.profile, [botConfig.comRelay])
+    log('service profile/relay registration published')
 
-// async function loadTorrent(torrentDir: string): Promise<string> {
-//
-//     // Check if the dir is empty
-//     if (fs.readdirSync(torrentDir).length === 0) {
-//         throw new Error('Empty torrentdir: ' + torrentDir)
-//     }
-//
-//
-//     const t = wt.seed(torrentDir, options)
-//
-//     return waitForInfoHash(t)
-// }
+    await ts.bot.loadTorrents()
+    log('existing seeding torrents loaded')
 
-// for (const filename of fs.readdirSync(botConfig.seedingDir)) {
-//     console.log(`Loading: ${filename}`)
-//     try {
-//         const torrentDir = path.join(botConfig.seedingDir, filename)
-//         const hash = await loadTorrent(torrentDir)
-//
-//         console.log(`Started seeding: ${filename} as ${hash}`)
-//
-//     } catch (e) {
-//         console.error(e)
-//     }
-// }
-
-const tb = new TranscodingBot(botConfig, wt)
-
-await tb.loadTorrents()
-
-// The event handler
-nostrCommunityServiceBot.session.eventStream.emitter.on(EventType.DISCOVERED, async (event: TrustedEvent) => {
-    const ne = Nip9999SeederTorrentTransformationRequestEvent.buildFromEvent(event)
-    await tb.transcode(ne, new RequestStateProgressTracker(event.id, nostrCommunityServiceBot.publisher))
-})
+    log('bot is ready and waiting for transformation requests')
+} catch (error) {
+    console.error('[seeder-bot] fatal startup error', error)
+    process.exit(1)
+}
