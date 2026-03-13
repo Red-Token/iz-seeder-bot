@@ -1,5 +1,5 @@
-import {DynamicPublisher} from 'iz-nostrlib/ses'
-import {Nip9999SeederTorrentTransformationResponseEvent} from 'iz-nostrlib/seederbot'
+import {DynamicPublisher} from '@nostream/sdk/ses'
+import {Nip9999SeederTorrentTransformationResponseEvent} from '@nostream/sdk/seederbot'
 import {Torrent} from 'webtorrent'
 
 

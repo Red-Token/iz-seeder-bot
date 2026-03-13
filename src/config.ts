@@ -1,6 +1,6 @@
 import fs, {readFileSync} from 'node:fs'
 import {normalizeRelayUrl} from '@red-token/welshman/util'
-import {NostrUserProfileMetaData} from 'iz-nostrlib/nip01'
+import {NostrUserProfileMetaData} from '@nostream/sdk/nip01'
 
 export class BotConfig {
     public readonly nsec: string

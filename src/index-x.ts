@@ -1,19 +1,19 @@
 // // src/index.ts
 // import {TrustedEvent} from '@red-token/welshman/util'
-// import {EventType} from 'iz-nostrlib'
+// import {EventType} from '@nostream/sdk'
 // import {
 //     Nip9999SeederTorrentTransformationRequestEvent,
 //     Nip9999SeederTorrentTransformationResponseEvent,
 //     NostrCommunityServiceBot
-// } from 'iz-nostrlib/seederbot'
+// } from '@nostream/sdk/seederbot'
 // import {
 //     asyncCreateWelshmanSession,
 //     CommunityNostrContext,
 //     GlobalNostrContext,
 //     Identifier,
 //     Identity
-// } from 'iz-nostrlib/communities'
-// import {DynamicPublisher, SignerData, SignerType} from 'iz-nostrlib/ses'
+// } from '@nostream/sdk/communities'
+// import {DynamicPublisher, SignerData, SignerType} from '@nostream/sdk/ses'
 //
 // import WebTorrent from 'webtorrent'
 // import SimplePeer from 'simple-peer'
@@ -25,8 +25,8 @@
 // import {BotConfig} from './config.js'
 // import {setContext} from '@red-token/welshman/lib'
 // import {getDefaultAppContext, getDefaultNetContext, repository, tracker} from '@red-token/welshman/app'
-// import {Nip01UserMetaDataEvent, NostrUserProfileMetaData, UserType} from 'iz-nostrlib/nip01'
-// import {Nip65RelayListMetadataEvent} from 'iz-nostrlib/nip65'
+// import {Nip01UserMetaDataEvent, NostrUserProfileMetaData, UserType} from '@nostream/sdk/nip01'
+// import {Nip65RelayListMetadataEvent} from '@nostream/sdk/nip65'
 // import { TranscodingBot } from './bot/TranscodingBot.js'
 // import {RequestStateProgressTracker} from './util/util.js'
 //

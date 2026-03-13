@@ -3,8 +3,8 @@ import WebTorrent, {Torrent} from 'webtorrent'
 // import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
 import {nip19} from 'nostr-tools'
 import {BotConfig} from '../src/config.js'
-// import {SignerData} from "iz-nostrlib/src/org/nostr/ses/SynchronisedSession";
-import {SignerType} from 'iz-nostrlib/ses'
+// import {SignerData} from "@nostream/sdk/src/org/nostr/ses/SynchronisedSession";
+import {SignerType} from '@nostream/sdk/ses'
 import {Subtitle, TranscodingBot, TranscodingRequest} from '../src/bot/TranscodingBot.js'
 import {Language, languages} from '../src/util/SubtitleConverter.js'
 import {formats} from '../src/util/VideoConverter.js'
@@ -13,14 +13,14 @@ import {
     Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceBot,
     NostrCommunityServiceClient
-} from 'iz-nostrlib/seederbot'
-import {DynamicPublisher} from 'iz-nostrlib/ses'
-import {DynamicSynchronisedSession, DynamicSubscription} from 'iz-nostrlib/ses'
-import {CommunityNostrContext} from 'iz-nostrlib/communities'
-import {GlobalNostrContext} from 'iz-nostrlib/communities'
-import {Identity} from 'iz-nostrlib/communities'
-import {asyncCreateWelshmanSession, Identifier} from 'iz-nostrlib/communities'
-import {EventType} from 'iz-nostrlib'
+} from '@nostream/sdk/seederbot'
+import {DynamicPublisher} from '@nostream/sdk/ses'
+import {DynamicSynchronisedSession, DynamicSubscription} from '@nostream/sdk/ses'
+import {CommunityNostrContext} from '@nostream/sdk/communities'
+import {GlobalNostrContext} from '@nostream/sdk/communities'
+import {Identity} from '@nostream/sdk/communities'
+import {asyncCreateWelshmanSession, Identifier} from '@nostream/sdk/communities'
+import {EventType} from '@nostream/sdk'
 import {TrustedEvent} from '@red-token/welshman/util'
 import {RequestStateProgressTracker, wait} from '../src/util/util.js'
 import {setContext} from '@red-token/welshman/lib'

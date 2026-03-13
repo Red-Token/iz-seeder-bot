@@ -40,7 +40,7 @@
     "esbuild": "^0.25.0",
     "fast-xml-parser": "^5.0.9",
     "gts": "^6.0.2",
-    "iz-nostrlib": "^0.2.4",
+    "@nostream/sdk": "^0.2.4",
     "localStorage": "^1.0.4",
     "mocha": "^10.8.2",
     "mock-local-storage": "^1.1.24",

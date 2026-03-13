@@ -3,24 +3,24 @@ import {
     Nip9999SeederTorrentTransformationRequestEvent, Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceClient,
     SignerType
-} from "iz-nostrlib";
+} from "@nostream/sdk";
 import SimplePeer from 'simple-peer';
 import WebTorrent from 'webtorrent';
 import {setContext} from "@welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@welshman/app";
-import {asyncCreateWelshmanSession, Identifier, Identity} from "iz-nostrlib/dist/org/nostr/communities/Identity.js";
-import {GlobalNostrContext} from "iz-nostrlib/dist/org/nostr/communities/GlobalNostrContext.js";
-import {CommunityNostrContext} from "iz-nostrlib/dist/org/nostr/communities/CommunityNostrContext.js";
+import {asyncCreateWelshmanSession, Identifier, Identity} from "@nostream/sdk/dist/org/nostr/communities/Identity.js";
+import {GlobalNostrContext} from "@nostream/sdk/dist/org/nostr/communities/GlobalNostrContext.js";
+import {CommunityNostrContext} from "@nostream/sdk/dist/org/nostr/communities/CommunityNostrContext.js";
 // import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
 import {getPublicKey, nip19} from "nostr-tools";
 // import {BotConfig} from "../src/config";
-// import {SignerData} from "iz-nostrlib/src/org/nostr/ses/SynchronisedSession";
+// import {SignerData} from "@nostream/sdk/src/org/nostr/ses/SynchronisedSession";
 import {expect} from "chai";
-import {DynamicSynchronisedSession} from "iz-nostrlib/dist/org/nostr/ses/DynamicSynchronisedSession.js";
-import {DynamicSubscription} from "iz-nostrlib/dist/org/nostr/ses/DynamicSubscription.js";
-import {safeFindOptionalMultiTagValue} from "iz-nostrlib/dist/org/nostr/AbstractNipEvent.js";
-import {DynamicPublisher} from "iz-nostrlib/dist/org/nostr/ses/DynamicPublisher.js";
-import {Nip35TorrentEvent} from "iz-nostrlib/dist/org/nostr/nip35/Nip35TorrentEvent.js";
+import {DynamicSynchronisedSession} from "@nostream/sdk/dist/org/nostr/ses/DynamicSynchronisedSession.js";
+import {DynamicSubscription} from "@nostream/sdk/dist/org/nostr/ses/DynamicSubscription.js";
+import {safeFindOptionalMultiTagValue} from "@nostream/sdk/dist/org/nostr/AbstractNipEvent.js";
+import {DynamicPublisher} from "@nostream/sdk/dist/org/nostr/ses/DynamicPublisher.js";
+import {Nip35TorrentEvent} from "@nostream/sdk/dist/org/nostr/nip35/Nip35TorrentEvent.js";
 
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';

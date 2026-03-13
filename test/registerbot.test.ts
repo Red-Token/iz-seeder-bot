@@ -6,16 +6,16 @@ import {getDefaultAppContext, getDefaultNetContext} from '@red-token/welshman/ap
 import {Actor} from '../src/service/Actor.js'
 import {getTorrentHash, wait} from '../src/util/util.js'
 import {expect} from 'chai'
-import {UserType} from 'iz-nostrlib/nip01'
+import {UserType} from '@nostream/sdk/nip01'
 import {
     Nip9999SeederTorrentTransformationRequestEvent,
     Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceClient
-} from 'iz-nostrlib/seederbot'
-import {CommunityNostrContext} from 'iz-nostrlib/communities'
+} from '@nostream/sdk/seederbot'
+import {CommunityNostrContext} from '@nostream/sdk/communities'
 import WebTorrent from 'webtorrent'
 import SimplePeer from 'simple-peer'
-import {EventType} from 'iz-nostrlib'
+import {EventType} from '@nostream/sdk'
 import {TrustedEvent} from '@red-token/welshman/util'
 import {Language, languages} from '../src/util/SubtitleConverter.js'
 import {Subtitle, TranscodingRequest} from '../src/bot/TranscodingBot.js'

@@ -1,7 +1,7 @@
-import {DynamicPublisher, SignerData, SignerType} from 'iz-nostrlib/ses'
-import {asyncCreateWelshmanSession, GlobalNostrContext, Identifier, Identity} from 'iz-nostrlib/communities'
-import {Nip01UserMetaDataEvent, NostrUserProfileMetaData, UserType} from 'iz-nostrlib/nip01'
-import {Nip65RelayListMetadataEvent} from 'iz-nostrlib/nip65'
+import {DynamicPublisher, SignerData, SignerType} from '@nostream/sdk/ses'
+import {asyncCreateWelshmanSession, GlobalNostrContext, Identifier, Identity} from '@nostream/sdk/communities'
+import {Nip01UserMetaDataEvent, NostrUserProfileMetaData, UserType} from '@nostream/sdk/nip01'
+import {Nip65RelayListMetadataEvent} from '@nostream/sdk/nip65'
 
 export class Actor {
     private _gdp: DynamicPublisher

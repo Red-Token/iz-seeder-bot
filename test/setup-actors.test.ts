@@ -1,10 +1,10 @@
 // import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
-// import {SignerData} from "iz-nostrlib/src/org/nostr/ses/SynchronisedSession";
-import {SignerType} from 'iz-nostrlib/ses'
+// import {SignerData} from "@nostream/sdk/src/org/nostr/ses/SynchronisedSession";
+import {SignerType} from '@nostream/sdk/ses'
 import {TrustedEvent} from '@red-token/welshman/util'
 import {setContext} from '@red-token/welshman/lib'
 import {getDefaultAppContext, getDefaultNetContext} from '@red-token/welshman/app'
-import {UserType} from 'iz-nostrlib/nip01'
+import {UserType} from '@nostream/sdk/nip01'
 import {expect} from 'chai'
 import {TranscodingService} from '../src/service/TranscodingService.js'
 import {BotConfig} from '../src/config.js'
@@ -12,12 +12,12 @@ import {
     Nip9999SeederTorrentTransformationRequestEvent,
     Nip9999SeederTorrentTransformationResponseEvent,
     NostrCommunityServiceClient
-} from 'iz-nostrlib/seederbot'
+} from '@nostream/sdk/seederbot'
 import {Language, languages} from '../src/util/SubtitleConverter.js'
 import {Subtitle, TranscodingRequest} from '../src/bot/TranscodingBot.js'
 import {formats} from '../src/util/VideoConverter.js'
 import {getPublicKey, nip19} from 'nostr-tools'
-import {EventType} from 'iz-nostrlib'
+import {EventType} from '@nostream/sdk'
 import {wt} from '../src/wt/IZWebTorrent.js'
 import {Torrent} from 'webtorrent'
 import {createAlice, createBob, createTranscodingBot, createWonderland, resetRelays} from '../src/test/testhelp.js'

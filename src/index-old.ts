@@ -3,7 +3,7 @@ import {
     EventType,
     SignerData,
     SignerType
-} from "iz-nostrlib";
+} from "@nostream/sdk";
 import WebTorrent from "webtorrent";
 import SimplePeer from "simple-peer";
 import {randomUUID} from "node:crypto";
@@ -11,11 +11,11 @@ import {mkdirSync} from "fs";
 import ffmpeg from 'fluent-ffmpeg';
 import path from "node:path";
 import fs from "node:fs";
-import {GlobalNostrContext, asyncCreateWelshmanSession, Identifier, Identity, CommunityNostrContext} from "iz-nostrlib/communities";
+import {GlobalNostrContext, asyncCreateWelshmanSession, Identifier, Identity, CommunityNostrContext} from "@nostream/sdk/communities";
 import {BotConfig} from "./config-old.js";
-import {DynamicPublisher} from "iz-nostrlib/ses";
+import {DynamicPublisher} from "@nostream/sdk/ses";
 import {Nip9999SeederTorrentTransformationRequestEvent,
-    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot} from "iz-nostrlib/seederbot";
+    Nip9999SeederTorrentTransformationResponseEvent, NostrCommunityServiceBot} from "@nostream/sdk/seederbot";
 import {setContext} from "@red-token/welshman/lib";
 import {getDefaultAppContext, getDefaultNetContext} from "@red-token/welshman/app";
 import {normalizeRelayUrl, TrustedEvent} from "@red-token/welshman/util";

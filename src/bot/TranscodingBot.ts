@@ -1,4 +1,4 @@
-import {Nip9999SeederTorrentTransformationRequestEvent} from 'iz-nostrlib/seederbot'
+import {Nip9999SeederTorrentTransformationRequestEvent} from '@nostream/sdk/seederbot'
 import path from 'node:path'
 import {randomUUID} from 'node:crypto'
 import {mkdirSync} from 'fs'

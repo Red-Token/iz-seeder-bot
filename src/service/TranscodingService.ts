@@ -1,21 +1,21 @@
 import {
     Nip9999SeederTorrentTransformationRequestEvent,
     NostrCommunityServiceBot,
-} from 'iz-nostrlib/seederbot'
+} from '@nostream/sdk/seederbot'
 import {
     CommunityNostrContext,
     GlobalNostrContext,
     Identifier,
-} from 'iz-nostrlib/communities'
+} from '@nostream/sdk/communities'
 import {TranscodingBot} from '../bot/TranscodingBot.js'
 import {BotConfig} from '../config.js'
 import WebTorrent from 'webtorrent'
 import {RequestStateProgressTracker, wait} from '../util/util.js'
 import {wt} from '../wt/IZWebTorrent.js'
-import {EventType} from 'iz-nostrlib'
+import {EventType} from '@nostream/sdk'
 import {TrustedEvent} from '@red-token/welshman/util'
 import {Actor} from './Actor.js'
-import {NostrUserProfileMetaData, UserType} from 'iz-nostrlib/nip01'
+import {NostrUserProfileMetaData, UserType} from '@nostream/sdk/nip01'
 
 export class TranscodingService extends Actor {
     public bot: TranscodingBot

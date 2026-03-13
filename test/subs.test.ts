@@ -1,8 +1,8 @@
 import SimplePeer from 'simple-peer'
 import WebTorrent, {Torrent} from 'webtorrent'
 // import {normalizeRelayUrl, TrustedEvent} from "@welshman/util";
-// import {SignerData} from "iz-nostrlib/src/org/nostr/ses/SynchronisedSession";
-import {SignerType} from 'iz-nostrlib/ses'
+// import {SignerData} from "@nostream/sdk/src/org/nostr/ses/SynchronisedSession";
+import {SignerType} from '@nostream/sdk/ses'
 import {languages} from '../src/util/SubtitleConverter.js'
 import {searchAndDownloadSubtitles} from '../src/api/opensubtitles/SubtitleDownloader.js'
 
