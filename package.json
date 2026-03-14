@@ -27,6 +27,7 @@
     "logError": true
   },
   "devDependencies": {
+    "@nostream/sdk": "^0.2.4",
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^5.0.1",
     "@types/fluent-ffmpeg": "^2.1.27",
@@ -40,7 +41,6 @@
     "esbuild": "^0.25.0",
     "fast-xml-parser": "^5.0.9",
     "gts": "^6.0.2",
-    "@nostream/sdk": "^0.2.4",
     "localStorage": "^1.0.4",
     "mocha": "^10.8.2",
     "mock-local-storage": "^1.1.24",
@@ -58,6 +58,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@nostream/sdk": "^0.2.7",
     "@red-token/welshman": "^0.2.9",
     "fluent-ffmpeg": "^2.1.3",
     "simple-peer": "^9.11.1",
